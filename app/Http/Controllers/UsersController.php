@@ -4,21 +4,74 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use Spatie\Permission\Models\Role;
+
 use App\Models\Commissions;
 use App\Models\User;
+use App\Models\UserDetails;
+use App\Models\UserCommissions;
 
 class UsersController extends Controller
 {
+    public function edit($id){
+        $user = User::join('users_details', 'users_details.users_id', 'users.id')
+                    ->select(
+                        'users.id', 'users.names', 'users.lastname1', 'users.lastname2', 'users.email', 'users.role',
+                        'users_details.goal', 'users_details.salary'
+                    )->where('users.id', $id)->first();
+
+        $user['commissions'] = Commissions::join('users_commissions', 'users_commissions.commissions_id', 'commissions.id')
+                                ->select('commissions.id', 'commissions.concept', 'users_commissions.amount')
+                                ->where('users_commissions.users_id', $user->id)
+                                ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
+
+    public function delete($id){
+        try{
+            \DB::beginTransaction();
+
+            $user = User::find($id);
+
+            \DB::table('users_commissions')->where('users_id', $id)->delete();
+
+            $user->delete();
+
+            \DB::commit();
+
+            return response()->json([
+                'success'=>true,
+                'message'=>'El usuario re elimino correctamente'
+            ]);
+
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success'=>false,
+                'message'=>$e->getMessage().' '.$e->getLine()
+            ]);
+        }
+    }
+
     public function list(){
         $users = User::join('users_details', 'users_details.users_id', 'users.id')
                     ->select(
-                        'users.id', 'users.names', 'users.lastname1', 'users.lastname2', 'users.email', 'users.role',
+                        'users.id', 'users.names', 'users.lastname1', 'users.lastname2', 'users.email','users.role',
                         'users_details.goal', 'users_details.salary'
                     )
                     ->get();
 
         $list = [];
         foreach($users as $user){
+            $role = Role::select('display_name')->where('id', $user->role)->first();
+
+            $user->role = $role->display_name;
+
             $commissions = Commissions::leftJoin('users_commissions', 'users_commissions.commissions_id', 'commissions.id')
                                         ->select('commissions.id', 'commissions.concept', 'users_commissions.amount')
                                         ->where('users_commissions.users_id', $user->id)
@@ -48,6 +101,56 @@ class UsersController extends Controller
             'data' => $list
         ]);
 
+    }
+
+    public function store(Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $user = new User();
+            $user->fill($request->all());
+            $user->password = bcrypt($request->password);
+            $user->save();
+
+            $details = new UserDetails();
+            $details->users_id = $user->id;
+            $details->goal = $request->goal;
+            $details->salary = $request->salary;
+            $details->save();
+
+            foreach($request->commissions as $item){
+                $commissionId = $item['id'];
+
+                if(is_null($commissionId)){
+                    $commission = new Commissions();
+                    $commission->concept = $item['concept'];
+                    $commission->save();
+
+                    $commissionId = $commission->id;
+                }
+
+                $userCommission = new UserCommissions();
+                $userCommission->commissions_id = $commissionId;
+                $userCommission->users_id = $user->id;
+                $userCommission->amount = $item['amount'];
+                $userCommission->save();
+            }
+
+            \DB::commit();
+
+            return response()->json([
+                'success'=>true,
+                'message'=>'El usuario se registro correctamente'
+            ]);
+
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage().' - '.$e->getLine()
+            ]);
+        }
     }
 
     /**
@@ -91,6 +194,57 @@ class UsersController extends Controller
                 'stauts' => 'error',
                 'message' => $e->getMessage().' '.$e->getCode().' '.$e->getLine().' in file UsersController'
             ], 500);
+        }
+    }
+
+    public function update($id, Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $user = User::find($id);
+            $user->fill($request->all());
+            $user->save();
+
+            $details = UserDetails::where('users_id', $id)->first();
+            $details->goal = $request->goal;
+            $details->salary = $request->salary;
+            $details->save();
+
+            //delete user commissions 
+            \DB::table('users_commissions')->where('users_id', $id)->delete();
+
+            foreach($request->commissions as $item){
+                $commissionId = $item['id'];
+
+                if(is_null($commissionId)){
+                    $commission = new Commissions();
+                    $commission->concept = $item['concept'];
+                    $commission->save();
+
+                    $commissionId = $commission->id;
+                }
+
+                $userCommission = new UserCommissions();
+                $userCommission->commissions_id = $commissionId;
+                $userCommission->users_id = $user->id;
+                $userCommission->amount = $item['amount'];
+                $userCommission->save();
+            }
+
+            \DB::commit();
+
+            return response()->json([
+                'success'=>true,
+                'message'=>'El usuario se actualizo correctamente'
+            ]);
+
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 }

@@ -42,7 +42,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('users_commisions', function(Blueprint $table){
+        Schema::create('users_commissions', function(Blueprint $table){
             $table->id();
             $table->bigInteger('commissions_id')->unsigned()->index();
             $table->bigInteger('users_id')->unsigned()->index();

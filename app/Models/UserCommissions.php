@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserCommissions extends Model
 {
-    protected $table = 'users_commisions';
+    protected $table = 'users_commissions';
+
+    public $timestamps = false;
 }

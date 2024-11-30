@@ -21,12 +21,17 @@ Route::group(['prefix'=>'v1'], function(){
 
     Route::group(['middleware' => 'auth:sanctum'], function(){
         Route::controller(UsersController::class)->group(function(){
-            Route::post('users/reset', 'restorePassword');
+            Route::get('users/{id}/edit', 'edit');
+            Route::delete('users/{id}/delete', 'delete');
             Route::get('users/list', 'list');
+            Route::post('users/reset', 'restorePassword');
+            Route::post('users', 'store');
+            Route::put('users/{id}/update', 'update');
         });
 
         Route::controller(CommissionsController::class)->group(function(){
             Route::get('commissions/list', 'list');
+            Route::put('commissions/users/update', 'userUpdate');
         });
 
         Route::controller(PermissionsController::class)->group(function(){
@@ -37,11 +42,12 @@ Route::group(['prefix'=>'v1'], function(){
         });
 
         Route::controller(RolesController::class)->group(function(){
-            Route::get('roles/{id}', 'edit');
-            Route::delete('roles/{id}', 'delete');
+            Route::get('roles/{id}/edit', 'edit');
+            Route::delete('roles/{id}/delete', 'delete');
             Route::get('roles', 'fullList');
+            Route::get('roles/list', 'list');
             Route::post('roles', 'store');
-            Route::put('roles/{id}', 'update');
+            Route::put('roles/{id}/update', 'update');
 
         });
     });

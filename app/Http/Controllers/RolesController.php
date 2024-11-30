@@ -62,6 +62,16 @@ class RolesController extends Controller
         ]);
     }
 
+    public function list(){
+        $roles = Role::select('id as value', 'display_name as label')->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $roles
+        ]);
+
+    }
+
     public function store(Request $request){
         try{
             \DB::beginTransaction();
