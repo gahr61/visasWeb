@@ -30,8 +30,13 @@ Route::group(['prefix'=>'v1'], function(){
         });
 
         Route::controller(CommissionsController::class)->group(function(){
+            Route::delete('commissions/{id}/delete', 'delete');
+            Route::get('commissions/{id}/edit', 'edit');
             Route::get('commissions/list', 'list');
+            Route::post('commissions', 'store');
+            Route::put('commissions/update', 'update');
             Route::put('commissions/users/update', 'userUpdate');
+            Route::get('commissions/{id}/verify/users', 'verifyCommissionUser');
         });
 
         Route::controller(PermissionsController::class)->group(function(){
