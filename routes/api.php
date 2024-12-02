@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BranchOfficeController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\RolesController;
@@ -20,14 +21,13 @@ Route::group(['prefix'=>'v1'], function(){
     });
 
     Route::group(['middleware' => 'auth:sanctum'], function(){
-        Route::controller(UsersController::class)->group(function(){
-            Route::get('users/{id}/edit', 'edit');
-            Route::delete('users/{id}/delete', 'delete');
-            Route::get('users/list', 'list');
-            Route::post('users/reset', 'restorePassword');
-            Route::post('users', 'store');
-            Route::put('users/{id}/update', 'update');
-        });
+        Route::controller(BranchOfficeController::class)->group(function(){
+            Route::delete('branchOffice/{id}/delete', 'delete');
+            Route::get('branchOffice/{id}/edit', 'edit');
+            Route::get('branchOffice/list', 'list');
+            Route::post('branchOffice', 'store');
+            Route::put('branchOffice/{id}/update', 'update');
+        });        
 
         Route::controller(CommissionsController::class)->group(function(){
             Route::delete('commissions/{id}/delete', 'delete');
@@ -53,7 +53,15 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('roles/list', 'list');
             Route::post('roles', 'store');
             Route::put('roles/{id}/update', 'update');
+        });
 
+        Route::controller(UsersController::class)->group(function(){
+            Route::get('users/{id}/edit', 'edit');
+            Route::delete('users/{id}/delete', 'delete');
+            Route::get('users/list', 'list');
+            Route::post('users/reset', 'restorePassword');
+            Route::post('users', 'store');
+            Route::put('users/{id}/update', 'update');
         });
     });
 });
