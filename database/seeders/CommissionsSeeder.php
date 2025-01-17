@@ -21,7 +21,7 @@ class CommissionsSeeder extends Seeder
             'concept'=>'Pasaporte'
         ]);
         \DB::table('commissions')->insert([
-            'concept'=>'PAsaporte compartido'
+            'concept'=>'Pasaporte compartido'
         ]);
     }
 }

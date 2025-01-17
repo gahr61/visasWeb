@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BranchOfficeController;
+use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\RolesController;
@@ -28,6 +29,17 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('branchOffice', 'store');
             Route::put('branchOffice/{id}/update', 'update');
         });        
+
+        Route::controller(SalesConceptsController::class)->group(function(){
+            Route::post('concepts', 'store');
+            Route::get('concepts/list', 'index');
+            Route::get('concepts/{id}/edit', 'show');
+            Route::get('concepts/{id}/history', 'history');
+            Route::put('concepts/{id}/update', 'update');
+
+            Route::get('concepts/visa', 'visaPrices');
+
+        });
 
         Route::controller(CommissionsController::class)->group(function(){
             Route::delete('commissions/{id}/delete', 'delete');
@@ -60,6 +72,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::delete('users/{id}/delete', 'delete');
             Route::get('users/list', 'list');
             Route::post('users/reset', 'restorePassword');
+            Route::get('users/sales', 'sales');
             Route::post('users', 'store');
             Route::put('users/{id}/update', 'update');
         });
