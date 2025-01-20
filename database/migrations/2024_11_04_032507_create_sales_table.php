@@ -71,6 +71,7 @@ return new class extends Migration
             $table->bigInteger('users_id')->unsigned()->index();
             $table->string('concept', 100);
             $table->decimal('amount', 8, 2);
+            $table->timestamps();
 
             $table->foreign('sales_id')->references('id')->on('sales')->onDelete('cascade');
             $table->foreign('users_id')->references('id')->on('users')->onDelete('cascade');

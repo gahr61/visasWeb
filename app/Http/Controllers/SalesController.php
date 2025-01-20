@@ -8,16 +8,28 @@ use App\Models\BranchOffices;
 use App\Models\Countries;
 use App\Models\Commissions;
 use App\Models\Clients;
+use App\Models\ClientsPhones;
+use App\Models\ClientsPassportHistory;
+use App\Models\ClientsVisaHistory;
 use App\Models\Passport;
 use App\Models\Process;
+use App\Models\ProcessStatus;
 use App\Models\Sales;
+use App\Models\SalesBilling;
+use App\Models\SalesBranchOffice;
+use App\Models\SalesClients;
+use App\Models\SalesCommissions;
 use App\Models\SalesDetails;
+use App\Models\SalesPayment;
 use App\Models\SalesProcess;
+use App\Models\SalesStatus;
+use App\Models\SalesUsers;
 use App\Models\Visas;
 
 class SalesController extends Controller
 {
 
+    /** visa procedure list */
     public function visa_list(){
         $visas = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
                         ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
@@ -47,6 +59,7 @@ class SalesController extends Controller
         ]);
     }
 
+    /** save visa procedure */
     public function visa_store(Request $request){
         try{
             \DB::beginTransaction();
@@ -67,10 +80,10 @@ class SalesController extends Controller
             foreach($commissions as $commissionItem){
                 if($commissionItem['type'] == 'seller'){
                     /** save sales users */
-                    $salesUsers = \DB::table('sales_users')->insert([
-                        'sales_id' => $sales->id,
-                        'users_id' => $commissionItem['users_id']
-                    ]);
+                    $salesUsers = new SalesUsers();
+                    $salesUsers->sales_id = $sales->id;
+                    $salesUsers->users_id = $commissionItem['users_id'];
+                    $salesUsers->save();                    
                 }      
                 
                 /** save sales commisions */
@@ -81,12 +94,13 @@ class SalesController extends Controller
                                     ->first();
 
                 if($commission){
-                    $saleCommissions = \DB::table('sales_commissions')->insert([
-                        'sales_id'=>$sales->id,
-                        'users_id' => $commissionItem['users_id'],
-                        'concept' => $commission->concept,
-                        'amount' => $commission->amount
-                    ]);
+                    $saleCommissions = new SalesCommissions();
+                    $saleCommissions->sales_id = $sales->id;
+                    $saleCommissions->users_id = $commissionItem['users_id'];
+                    $saleCommissions->concept = $commission->concept;
+                    $saleCommissions->amount = $commission->amount;
+                    $saleCommissions->save();
+                    
                 }
                     
             }
@@ -104,14 +118,14 @@ class SalesController extends Controller
 
             /** sales branch office - if branch office is deleted */
             $branchOffice = BranchOffices::where('id', $sales->branch_offices_id)->first();
-            \DB::table('sales_branch_office')->insert([
+            SalesBranchOffice::create([
                 'sales_id' => $sales->id,
                 'name' => $branchOffice->name
             ]);
 
             /** sales payment */
             $payment = $request->payment;
-            \DB::table('sales_payment')->insert([
+            SalesPayment::create([
                 'sales_id' => $sales->id,
                 'method_payment' => $payment['method_payment'],
                 'amount' => $payment['amount'],
@@ -123,7 +137,7 @@ class SalesController extends Controller
 
             /**sales billing */
             $billing = $request->billing;
-            \DB::table('sales_billing')->insert([
+            SalesBilling::create([
                 'sales_id' => $sales->id,
                 'email' => $billing['email'],
                 'names' => $billing['names'],
@@ -133,7 +147,7 @@ class SalesController extends Controller
             ]);
 
             /** sales status */
-            \DB::table('sales_status')->insert([
+            SalesStatus::create([
                 'sales_id' => $sales->id,
                 'status' => 'Ficha pendiente',
                 'is_last' => true
@@ -167,15 +181,16 @@ class SalesController extends Controller
                 /** clients phones */
                 $phones = $item['phones'];
                 foreach($phones as $phone){
-                    \DB::table('clients_phones')->insert([
-                        'clients_id' => $client->id,
-                        'type' => $phone['type'],
-                        'number' => $phone['number']
-                    ]);
+                    $clientPhones = new ClientsPhones();
+                    $clientPhones->clients_id = $client->id;
+                    $clientPhones->type = $phone['type'];
+                    $clientPhones->number = $phone['number'];
+                    $clientPhones->save();
+                    
                 }
 
                 /** sales clients */
-                \DB::table('sales_clients')->insert([
+                SalesClients::create([
                     'sales_id' => $sales->id,
                     'clients_id' => $client->id
                 ]);
@@ -191,7 +206,7 @@ class SalesController extends Controller
                 $process->save();
 
                 /** process status */
-                \DB::table('process_status')->insert([
+                ProcessStatus::create([
                     'process_id' => $process->id,
                     'status' => 'Inicio',
                     'is_last' => true
@@ -206,12 +221,12 @@ class SalesController extends Controller
                 $passport->save();
 
                 /** client passport history */
-                $findPassport = \DB::table('clients_passport_history')->where('clients_id', $client->id)
+                $findPassport = ClientsPassportHistory::where('clients_id', $client->id)
                                     ->where('number', $passport->number)
                                     ->first();
 
                 if(!isset($findPassport)){
-                    \DB::table('clients_passport_history')->insert([
+                    ClientsPassportHistory::create([
                         'clients_id' => $client->id,
                         'number' => $passport->number,
                         'expedition_date' => $passport->expedition_date,
@@ -230,12 +245,12 @@ class SalesController extends Controller
                     $visa->save();
 
                     /** client visa  history */
-                    $findVisa = \DB::table('clients_visa_history')->where('clients_id', $client->id)
+                    $findVisa = ClientsVisaHistory::where('clients_id', $client->id)
                                     ->where('number', $passport->number)
                                     ->first();
 
                     if(!isset($findVisa)){
-                        \DB::table('clients_visa_history')->insert([
+                        ClientsVisaHistory::create([
                             'clients_id' => $client->id,
                             'number' => $visa->number,
                             'expedition_date' => $visa->expedition_date,

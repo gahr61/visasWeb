@@ -127,6 +127,7 @@ return new class extends Migration
             $table->string('number', 50);
             $table->date('expedition_date')->nullable();
             $table->date('expiration_date');
+            $table->timestamps();
 
             $table->foreign('clients_id')->references('id')->on('clients')->onDelete('cascade');
         });
@@ -137,6 +138,7 @@ return new class extends Migration
             $table->string('number', 50);
             $table->date('expedition_date')->nullable();
             $table->date('expiration_date');
+            $table->timestamps();
 
             $table->foreign('clients_id')->references('id')->on('clients')->onDelete('cascade');
         });
