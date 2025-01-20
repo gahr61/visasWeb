@@ -17,6 +17,36 @@ use App\Models\Visas;
 
 class SalesController extends Controller
 {
+
+    public function visa_list(){
+        $visas = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
+                        ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
+                        ->join('sales_status', 'sales_status.sales_id', 'sales.id')
+                        ->selectRaw('
+                            sales.id, sales.folio, sales.date,
+                            COUNT(sales_clients.id) AS no_applicants,
+                            sales_billing.names, sales_billing.lastname1, sales_billing.lastname2, sales_billing.email,
+                            sales_status.status
+                        ')
+                        ->groupBy('sales.id', 'sales.folio', 'sales.date', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2', 'sales_billing.email', 'sales_status.status')
+                        ->get();
+
+        $list = array();
+
+        foreach($visas as $visa){
+            $list[] = [
+                'id' => $visa->id, 'folio' => $visa->folio, 'date' => $visa->date, 'no_applicants' => $visa->no_applicants,
+                'client' => $visa->names.' '.$visa->lastname1.(is_null($visa->lastname2) ? '' : ' '.$visa->lastname2),
+                'email' => $visa->email, 'status' => $visa->status
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $list
+        ]);
+    }
+
     public function visa_store(Request $request){
         try{
             \DB::beginTransaction();

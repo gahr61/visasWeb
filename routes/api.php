@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BranchOfficeController;
+use App\Http\Controllers\CountriesController;
 use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
@@ -30,6 +31,11 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('branchOffice', 'store');
             Route::put('branchOffice/{id}/update', 'update');
         });        
+
+        Route::controller(CountriesController::class)->group(function(){
+            Route::get('countries/list', 'countries');
+            Route::get('countries/states/{id}', 'statesByCountry');
+        });
 
         Route::controller(SalesConceptsController::class)->group(function(){
             Route::post('concepts', 'store');
@@ -59,6 +65,7 @@ Route::group(['prefix'=>'v1'], function(){
 
         Route::controller(SalesController::class)->group(function(){
             Route::post('sales/visa', 'visa_store');
+            Route::get('sales/visa/list', 'visa_list');
         });
 
         Route::controller(RolesController::class)->group(function(){
