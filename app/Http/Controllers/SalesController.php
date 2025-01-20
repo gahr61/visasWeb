@@ -14,6 +14,7 @@ use App\Models\ClientsVisaHistory;
 use App\Models\Passport;
 use App\Models\Process;
 use App\Models\ProcessStatus;
+use App\Models\ProcessDocuments;
 use App\Models\Sales;
 use App\Models\SalesBilling;
 use App\Models\SalesBranchOffice;
@@ -261,6 +262,9 @@ class SalesController extends Controller
 
             }
 
+            /** send email */
+            $this->sendWelcomeEmail($sales->id, 'Visa');
+
             \DB::commit();
 
             return response()->json([
@@ -276,4 +280,58 @@ class SalesController extends Controller
             ]);
         }
     }
+
+    /** send procedure email to client */
+    public function sendWelcomeEmail($sales_id, $type){
+        $sale = Sales::join('sales_billing', 'sales_billing.sales_id', 'sales.id')
+                    ->select('sales.date', 'sales.folio', 'sales_billing.email', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2')
+                    ->where('sales.id', $sales_id)
+                    ->first();
+
+        $date = date_create($sale->date);
+        $sale->date = date_format($date, 'd/m/Y');
+
+        $salesClients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
+                                ->join('process', 'process.clients_id', 'clients.id')
+                                ->select(
+                                    'clients.names', 'clients.lastname1', 'clients.lastname2', 
+                                    'process.type', 'process.age_type', 'process.subtype', 'process.option_type', 'process.visa_type'
+                                )
+                                ->where('sales_clients.sales_id', $sales_id)
+                                ->where('process.type', $type)
+                                ->get();
+
+
+        $documents = ProcessDocuments::select('documents')->where('type', $type)->first();
+
+        $procedure = [
+            'sale' => $sale,
+            'clients' => $salesClients,
+            'documents' => $documents
+        ];
+
+        $data = [
+            'body' => $procedure,
+            'sender' => 'postmaster@visas-premier.com',
+            'subject' => 'Inicio de trámite',
+            'receiver' => $sale->email
+        ];
+
+        $mail['data'] = $data;
+
+        $route = 'emails.sales.register';
+
+        $email = \Mail::send($route, $mail, function($m) use($data){
+            $m->from($data['sender'], 'Visas premier');
+            
+            $receiverName = $data['body']['sale']['names'].' '.$data['body']['sale']['lastname1'].(is_null($data['body']['sale']['lastname2']) ? '' : ' '.$data['body']['sale']['lastname2']);
+
+            $m->to($data['receiver'], $receiverName)->subject($data['subject']);
+        });
+
+        return 'ok';
+    }
+
+    /** send visa ticket to client */
+
 }
