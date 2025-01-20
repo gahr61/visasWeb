@@ -103,6 +103,29 @@ class UsersController extends Controller
 
     }
 
+    /**
+     * get list users except system admin
+     */
+    public function sales(){
+        $users = User::select('id', 'names', 'lastname1', 'lastname2')
+                        ->where('role', '!=', 'administrador_de_sistema')
+                        ->get();
+
+        $list = [];
+
+        foreach($users as $user){
+            $list[] = [
+                'value'=>$user->id,
+                'label'=>$user->names.' '.$user->lastname1.(is_null($user->lastname2) ? '' : ' '.$user->lastname2)
+            ];
+        }
+
+        return response()->json([
+            'success'=>true,
+            'data'=>$list
+        ]);
+    }
+
     public function store(Request $request){
         try{
             \DB::beginTransaction();
@@ -170,7 +193,6 @@ class UsersController extends Controller
             $user_id = auth()->user()->id;
             $changeRequired = false;
 
-            
             if(!is_null($request->users_id)){
                 $user_id = $request->users_id;
                 $changeRequired = true;
@@ -184,8 +206,8 @@ class UsersController extends Controller
             \DB::commit();
 
             return response()->json([
-                'status'=>'success',
-                'message' => 'Password was updated successfully'
+                'success'=>true,
+                'message' => 'La contraseña se actualizo correctamente'
             ], 200);
         }catch(\Exception $e){
             \DB::rollback();

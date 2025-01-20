@@ -7,6 +7,7 @@ use App\Http\Controllers\BranchOfficeController;
 use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
+use App\Http\Controllers\SalesController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
 
@@ -36,9 +37,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('concepts/{id}/edit', 'show');
             Route::get('concepts/{id}/history', 'history');
             Route::put('concepts/{id}/update', 'update');
-
             Route::get('concepts/visa', 'visaPrices');
-
         });
 
         Route::controller(CommissionsController::class)->group(function(){
@@ -56,6 +55,10 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('permissions/assigned/{id}', 'permissionsAssigned');
             Route::put('permissions/assign', 'assign');
             Route::put('permissions/design', 'design');
+        });
+
+        Route::controller(SalesController::class)->group(function(){
+            Route::post('sales/visa', 'visa_store');
         });
 
         Route::controller(RolesController::class)->group(function(){
