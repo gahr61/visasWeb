@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BranchOfficeController;
 use App\Http\Controllers\CountriesController;
 use App\Http\Controllers\SalesConceptsController;
+use App\Http\Controllers\SalesBillingController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\SalesController;
@@ -36,6 +37,8 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('countries/list', 'countries');
             Route::get('countries/states/{id}', 'statesByCountry');
         });
+
+        Route::post('sales/visa/payment', [SalesBillingController::class, 'sendVisaPayment']);
 
         Route::controller(SalesConceptsController::class)->group(function(){
             Route::post('concepts', 'store');
