@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BranchOfficeController;
+use App\Http\Controllers\ClientsController;
 use App\Http\Controllers\CountriesController;
 use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\SalesBillingController;
@@ -38,7 +39,15 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('countries/states/{id}', 'statesByCountry');
         });
 
-        Route::post('sales/visa/payment', [SalesBillingController::class, 'sendVisaPayment']);
+        Route::controller(ClientsController::class)->group(function(){
+            Route::post('clients/confirm/payment', 'clientsConfirmVisaPayment');
+        });
+
+        Route::controller(SalesBillingController::class)->group(function(){
+            Route::post('sales/visa/payment', 'sendVisaPayment');
+            Route::put('sales/visa/payment/confirm', 'visaPaymentUpdate');
+            Route::get('sales/visa/payment/list/{id}', 'visaPaymentList');
+        });
 
         Route::controller(SalesConceptsController::class)->group(function(){
             Route::post('concepts', 'store');

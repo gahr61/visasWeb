@@ -4,8 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use Intervention\Image\Laravel\Facades\Image;
+use Illuminate\Support\Facades\Storage;
+
 class GeneralController extends Controller
 {
+    /**
+     * 
+     */
     public function encriptString($simple_string){        
         // Store the cipher method
         $ciphering = "AES-128-CTR";
@@ -25,5 +31,52 @@ class GeneralController extends Controller
                     $encryption_key, $options, $encryption_iv);
         
         return $encryption;
+    }
+
+    /**
+     * save image on storage
+     * @param image $image
+     * @param string $path
+     * @param string $name
+     * @return string
+     */
+    public function saveImageOnStorage($image, $path, $name){
+        try{
+           // $imagePath = storage_path().'\\app/'.$path;
+            $imagePath = 'app/public/'.$path;
+
+            $fullPath =storage_path().'/'. $imagePath.'/'.$name;
+
+            $img = Image::read($image->getRealPath());
+
+            $width = $img->width();
+            $height = $img->height();
+
+            if($width > $height){
+                if($width > 600){
+                    $width = $width / 2;
+                    $height = $height / 2;
+                }
+            }else{
+                if($width > 600){
+                    $width = $width / 2;
+                    $height = $height / 2;
+                }
+            }
+
+            $newImage = $img->resize($width, $height);
+
+
+            if(!Storage::disk('public')->exists($path)){
+                Storage::disk('public')->makeDirectory($path);
+            }
+
+            $newImage->save($fullPath, 60);
+
+            return 'saved';
+        }catch(\Exception $e){
+            return 'Error Image ('.$e->getCode().'): '.$e->getMessage().' '.$e->getLine();
+        }
+        
     }
 }

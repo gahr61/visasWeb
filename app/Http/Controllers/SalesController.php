@@ -41,6 +41,7 @@ class SalesController extends Controller
                             sales_billing.names, sales_billing.lastname1, sales_billing.lastname2, sales_billing.email,
                             sales_status.status
                         ')
+                        ->where('sales_status.is_last', true)
                         ->groupBy('sales.id', 'sales.folio', 'sales.date', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2', 'sales_billing.email', 'sales_status.status')
                         ->get();
 
@@ -334,4 +335,5 @@ class SalesController extends Controller
 
     /** send visa ticket to client */
 
+    
 }

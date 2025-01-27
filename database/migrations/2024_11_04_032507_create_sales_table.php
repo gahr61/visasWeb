@@ -173,7 +173,19 @@ return new class extends Migration
 
             $table->foreign('users_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('sales_id')->references('id')->on('sales')->onDelete('cascade');
-        });        
+        });
+
+        Schema::create('sales_visas_payment', function(Blueprint $table){
+            $table->id();
+            $table->bigInteger('sales_id')->unsigned()->index();
+            $table->bigInteger('clients_id')->unsigned()->index();
+            $table->string('ticket');
+            $table->boolean('is_confirmed')->default(false);
+            $table->timestamps();
+
+            $table->foreign('sales_id')->references('id')->on('sales')->onDelete('cascade');
+            $table->foreign('clients_id')->references('id')->on('clients')->onDelete('cascade');
+        });
 
     }
 
@@ -182,6 +194,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('sales_visas_payment');
         Schema::dropIfExists('sales_users');
         Schema::dropIfExists('sales_status');
         Schema::dropIfExists('sales_process_account');
