@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('option_type', ['Vencida o por vencer', 'Extraviado', 'Deteriorado', 'Cambio de datos', 'Vencido +4 años']);
             $table->enum('visa_type', ['Turista', 'Trabajo'])->nullabe();
             $table->string('observations', 300)->nullable();
+            $table->boolean('complete')->default(false);
             $table->timestamps();
 
             $table->foreign('clients_id')->references('id')->on('clients')->onDelete('cascade');

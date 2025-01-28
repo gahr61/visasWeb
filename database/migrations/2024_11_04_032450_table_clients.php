@@ -149,6 +149,8 @@ return new class extends Migration
             $table->date('appointment_date');
             $table->string('office', 150);
             $table->string('schedule', 150);
+            $table->enum('status', ['Activo', 'Cancelado', 'Finalizado'])->default('Activo');
+            $table->string('observations', 300)->nullable();
             $table->timestamps();
 
             $table->foreign('clients_id')->references('id')->on('clients')->onDelete('cascade');

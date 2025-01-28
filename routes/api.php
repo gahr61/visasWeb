@@ -49,14 +49,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('sales/visa/payment/list/{id}', 'visaPaymentList');
         });
 
-        Route::controller(SalesConceptsController::class)->group(function(){
-            Route::post('concepts', 'store');
-            Route::get('concepts/list', 'index');
-            Route::get('concepts/{id}/edit', 'show');
-            Route::get('concepts/{id}/history', 'history');
-            Route::put('concepts/{id}/update', 'update');
-            Route::get('concepts/visa', 'visaPrices');
-        });
+        
 
         Route::controller(CommissionsController::class)->group(function(){
             Route::delete('commissions/{id}/delete', 'delete');
@@ -78,6 +71,16 @@ Route::group(['prefix'=>'v1'], function(){
         Route::controller(SalesController::class)->group(function(){
             Route::post('sales/visa', 'visa_store');
             Route::get('sales/visa/list', 'visa_list');
+            Route::get('sales/{id}/details', 'info');
+        });
+
+        Route::controller(SalesConceptsController::class)->group(function(){
+            Route::post('concepts', 'store');
+            Route::get('concepts/list', 'index');
+            Route::get('concepts/{id}/edit', 'show');
+            Route::get('concepts/{id}/history', 'history');
+            Route::put('concepts/{id}/update', 'update');
+            Route::get('concepts/visa', 'visaPrices');
         });
 
         Route::controller(RolesController::class)->group(function(){

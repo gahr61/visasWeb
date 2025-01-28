@@ -146,14 +146,15 @@ return new class extends Migration
             $table->foreign('sales_id')->references('id')->on('sales')->onDelete('cascade');
         });
 
-        Schema::create('sales_proccess_account', function(Blueprint $table){
+        Schema::create('sales_process_account', function(Blueprint $table){
             $table->id();
-            $table->bigInteger('clients_id')->unsigned()->index();
+            $table->bigInteger('sales_id')->unsigned()->index();
+            $table->unsignedBigInteger('clients_id')->index()->nullable();
             $table->string('email', 150);
             $table->string('password');
             $table->timestamps();
 
-            $table->foreign('clients_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->foreign('sales_id')->references('id')->on('sales')->onDelete('cascade');
         });
 
         Schema::create('sales_status', function(Blueprint $table){
