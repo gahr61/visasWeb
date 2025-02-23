@@ -10,6 +10,8 @@ use App\Models\Commissions;
 use App\Models\User;
 use App\Models\UserDetails;
 use App\Models\UserCommissions;
+use App\Models\SalesVisasPayment;
+use App\Models\SalesStatus;
 
 class UsersController extends Controller
 {
@@ -172,6 +174,81 @@ class UsersController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage().' - '.$e->getLine()
+            ]);
+        }
+    }
+
+    public function userConfirmVisaPayment(Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $files = $request->file('files');
+
+            if(count($files) == 0){
+                return response()->josn(['success' => false, 'message' => 'Los archivos son requeridos']);
+            }
+
+            $correctFiles = 0;
+            $savedFile = '';
+
+            $sales_id = $request->sales_id;
+            $clients_id = $request->clients_id;
+
+            foreach($files as $file){
+                $fileName = 'file_'.time().rand(0, 10000);
+                $extension = $file->getClientOriginalExtension();
+
+                $fullnameFile = $fileName.'.'.$extension;
+
+                $filePath = 'sales/'.$sales_id.'/clients/'.$clients_id;
+
+                $salesVisaPayment = new SalesVisasPayment();
+                $salesVisaPayment->sales_id = $sales_id;
+                $salesVisaPayment->clients_id = $clients_id;
+                $salesVisaPayment->ticket = $filePath.'/'.$fullnameFile;
+                $salesVisaPayment->is_confirmed = true;
+                $salesVisaPayment->confirmed_by = 'User';
+                $salesVisaPayment->save();
+
+                if($extension == 'pdf'){
+                    $savedFile = (new GeneralController)->saveFileOnStorage($file, $filePath, $fullnameFile);
+                }else{
+                    $savedFile = (new GeneralController)->saveImageOnStorage($file, $filePath, $fullnameFile);
+                }
+                
+
+                if($savedFile == 'saved'){
+                    $correctFiles++;
+                }
+            }
+
+            $lastSaleStatus = SalesStatus::where('sales_id', $sales_id)->where('is_last', true)->first();
+
+            if($lastSaleStatus->status == 'Con ficha'){
+                $lastSaleStatus->is_last = false;
+                $lastSaleStatus->save();
+
+                $saleStatus = new SalesStatus();
+                $saleStatus->sales_id = $sales_id;
+                $saleStatus->status = 'Ficha pagada';
+                $saleStatus->is_last = true;
+                $saleStatus->save();
+            }
+
+            if(count($files) == $correctFiles){
+                \DB::commit();
+
+                return response()->json(['success' => true, 'message' => 'Confirmación exitosa']);
+            }
+
+            return response()->json(['success' => false, 'message' => 'error'.$correctFiles.' '.$savedFile]);
+
+        }catch(\Exception $e){
+            \DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage().' '.$e->getLine()
             ]);
         }
     }

@@ -79,4 +79,14 @@ class GeneralController extends Controller
         }
         
     }
+
+    public function saveFileOnStorage($file, $path, $name){
+        try{
+            $file->storeAs($path, $name, 'public');
+
+            return 'saved';
+        }catch(\Exception $e){
+            return $e->getMessage();
+        }
+    }
 }

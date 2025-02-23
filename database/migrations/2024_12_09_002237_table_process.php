@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('type', ['Pasaporte', 'Visa']);
             $table->enum('subtype', ['Primera vez', 'Renovación']);
             $table->enum('age_type', ['Mayor de edad', 'Menor de edad']);
-            $table->enum('option_type', ['Vencida o por vencer', 'Extraviado', 'Deteriorado', 'Cambio de datos', 'Vencido +4 años']);
+            $table->enum('option_type', ['Vencida o por vencer', 'Extraviado', 'Deteriorado', 'Cambio de datos', 'Vencido +4 años'])->nullable();
             $table->enum('visa_type', ['Turista', 'Trabajo'])->nullabe();
             $table->string('observations', 300)->nullable();
             $table->boolean('complete')->default(false);
@@ -105,9 +105,9 @@ return new class extends Migration
             $table->foreign('process_id')->references('id')->on('process')->onDelete('cascade');
         });
 
-        Schema::create('visas_details', function(Blueprint $table){
+        Schema::create('process_details', function(Blueprint $table){
             $table->id();
-            $table->bigInteger('visas_id')->unsigned()->index();
+            $table->bigInteger('process_id')->unsigned()->index();
             $table->date('travel_date')->nullable();
             $table->string('addresS_eeuu', 350)->nullable();
             $table->date('travel_date_eeuu')->nullable();
@@ -122,7 +122,7 @@ return new class extends Migration
             $table->string('travel_before_countries', 400)->nullable(); //pais a los que ha viajado
             $table->timestamps();
 
-            $table->foreign('visas_id')->references('id')->on('visas')->onDelete('cascade');
+            $table->foreign('process_id')->references('id')->on('visas')->onDelete('cascade');
         });
     }
 
@@ -131,7 +131,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('visas_details');
+        Schema::dropIfExists('process_details');
         Schema::dropIfExists('visas');
         Schema::dropIfExists('process_documents');
         Schema::dropIfExists('passport');

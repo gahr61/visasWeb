@@ -180,8 +180,9 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('sales_id')->unsigned()->index();
             $table->bigInteger('clients_id')->unsigned()->index();
-            $table->string('ticket');
+            $table->string('ticket')->nullable();
             $table->boolean('is_confirmed')->default(false);
+            $table->enum('confirmed_by', ['Client', 'User'])->default('User');
             $table->timestamps();
 
             $table->foreign('sales_id')->references('id')->on('sales')->onDelete('cascade');

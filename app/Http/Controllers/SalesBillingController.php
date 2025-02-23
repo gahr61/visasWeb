@@ -103,8 +103,9 @@ class SalesBillingController extends Controller
         $salesClients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
                                 ->leftJoin('sales_visas_payment', 'sales_visas_payment.clients_id', 'clients.id')
                                 ->select(
-                                    'sales_visas_payment.id', 'clients.names', 'clients.lastname1', 'clients.lastname2',
-                                    'sales_visas_payment.ticket', 'sales_visas_payment.is_confirmed'
+                                    'sales_visas_payment.id', 'sales_visas_payment.ticket', 'sales_visas_payment.is_confirmed',
+                                    'clients.id as clients_id', 'clients.names', 'clients.lastname1', 'clients.lastname2',                                    
+                                    'sales_clients.sales_id'
                                 )
                                 ->where('sales_clients.sales_id', $id)
                                 ->get();

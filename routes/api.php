@@ -10,6 +10,7 @@ use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\SalesBillingController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
+use App\Http\Controllers\ProceduresController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
@@ -41,15 +42,7 @@ Route::group(['prefix'=>'v1'], function(){
 
         Route::controller(ClientsController::class)->group(function(){
             Route::post('clients/confirm/payment', 'clientsConfirmVisaPayment');
-        });
-
-        Route::controller(SalesBillingController::class)->group(function(){
-            Route::post('sales/visa/payment', 'sendVisaPayment');
-            Route::put('sales/visa/payment/confirm', 'visaPaymentUpdate');
-            Route::get('sales/visa/payment/list/{id}', 'visaPaymentList');
-        });
-
-        
+        });        
 
         Route::controller(CommissionsController::class)->group(function(){
             Route::delete('commissions/{id}/delete', 'delete');
@@ -72,6 +65,12 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('sales/visa', 'visa_store');
             Route::get('sales/visa/list', 'visa_list');
             Route::get('sales/{id}/details', 'info');
+        });
+
+        Route::controller(SalesBillingController::class)->group(function(){
+            Route::post('sales/visa/payment', 'sendVisaPayment');
+            Route::put('sales/visa/payment/confirm', 'visaPaymentUpdate');
+            Route::get('sales/visa/payment/list/{id}', 'visaPaymentList');
         });
 
         Route::controller(SalesConceptsController::class)->group(function(){
@@ -100,6 +99,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('users/sales', 'sales');
             Route::post('users', 'store');
             Route::put('users/{id}/update', 'update');
+            Route::post('users/confirm/payment', 'userConfirmVisaPayment');
         });
     });
 });

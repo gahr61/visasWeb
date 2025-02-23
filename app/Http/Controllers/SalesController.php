@@ -373,9 +373,4 @@ class SalesController extends Controller
             ]);
         }
     }
-
-    
-
-
-    
 }

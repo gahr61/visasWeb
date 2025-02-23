@@ -41,6 +41,7 @@ class ClientsController extends Controller
                 $salesVisaPayment->clients_id = $request->clients_id;
                 $salesVisaPayment->ticket = $paymentPath.'/'.$fullNameImage;
                 $salesVisaPayment->is_confirmed = false;
+                $salesVisaPayment->confirmed_by = 'Client';
                 $salesVisaPayment->save();
                 
 
@@ -56,7 +57,7 @@ class ClientsController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Confirmacion exitosa'
+                    'message' => 'Confirmación exitosa'
                 ]);
             }
             
