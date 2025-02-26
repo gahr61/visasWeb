@@ -143,7 +143,7 @@
                         </p>
                         <br/>
                         <p style="text-align:justify;">
-                            <a href="https://visas-premier.com/procedures/confirm">https://visas-premier.com/procedures/confirm<a>.
+                            <a href="http://localhost:5173/sales/visa/confirm/{{$data['body']['token'] }}">Confirmar pago<a>.
                         </p>
                         <br/>
                         <p style="text-align:justify">

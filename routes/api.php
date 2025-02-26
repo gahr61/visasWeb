@@ -12,6 +12,7 @@ use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ProceduresController;
 use App\Http\Controllers\SalesController;
+use App\Http\Controllers\SalesTokenController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
 
@@ -26,6 +27,13 @@ Route::group(['prefix'=>'v1'], function(){
         });
     });
 
+    //verify token
+    Route::controller(SalesTokenController::class)->group(function(){
+        Route::post('sales/validate/token', 'verifyToken');
+    });
+
+    Route::post('sales/clients/confirm', [SalesBillingController::class, 'visaPaymentUpdate']);
+    
     Route::group(['middleware' => 'auth:sanctum'], function(){
         Route::controller(BranchOfficeController::class)->group(function(){
             Route::delete('branchOffice/{id}/delete', 'delete');
@@ -61,6 +69,10 @@ Route::group(['prefix'=>'v1'], function(){
             Route::put('permissions/design', 'design');
         });
 
+        Route::controller(ProceduresController::class)->group(function(){
+            Route::get('procedures/visas/{id}/details', 'infoVisasDetails');
+        });
+
         Route::controller(SalesController::class)->group(function(){
             Route::post('sales/visa', 'visa_store');
             Route::get('sales/visa/list', 'visa_list');
@@ -69,7 +81,7 @@ Route::group(['prefix'=>'v1'], function(){
 
         Route::controller(SalesBillingController::class)->group(function(){
             Route::post('sales/visa/payment', 'sendVisaPayment');
-            Route::put('sales/visa/payment/confirm', 'visaPaymentUpdate');
+            Route::post('sales/visa/payment/confirm', 'visaPaymentUpdate');
             Route::get('sales/visa/payment/list/{id}', 'visaPaymentList');
         });
 

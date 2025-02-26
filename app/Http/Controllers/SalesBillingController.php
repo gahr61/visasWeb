@@ -20,6 +20,7 @@ class SalesBillingController extends Controller
             
             $sales_id = $request->sales_id;
             $option = $request->option;
+            $token = '';
 
             $lastSaleStatus = SalesStatus::where('sales_id', $sales_id)->where('is_last', true)->first();
 
@@ -32,19 +33,37 @@ class SalesBillingController extends Controller
                 $saleStatus->status = 'Con ficha';
                 $saleStatus->is_last = true;
                 $saleStatus->save();
+
+
+                $clients = SalesClients::where('sales_id', $sales_id)->get();
+
+                foreach($clients as $client){
+                    $salesVisasPayment = new SalesVisasPayment();
+                    $salesVisasPayment->sales_id = $sales_id;
+                    $salesVisasPayment->clients_id = $client->clients_id;
+                    $salesVisasPayment->save();
+                }
+
+                if($token === 'error'){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error en el registro de confirmación'
+                    ]);
+                }
+
             }
             
             if($option == 'send'){
                 $sale = SalesBilling::join('sales', 'sales.id', 'sales_billing.sales_id')
                                 ->where('sales_billing.sales_id', $sales_id)
-                                ->select('sales.folio', 'sales_billing.email', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2')
+                                ->select('sales.id', 'sales.folio', 'sales_billing.email', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2')
                                 ->first();
 
                 $fullname = $sale->names.' '.$sale->lastname1.(is_null($sale->lastname2) ? '' : ' '.$sale->lastname2);
 
                 $files = $request->file('files');
 
-                $linkToken = (new GeneralController)->encriptString($sale->folio);
+                $token = (new SalesTokenController)->generateToken($sales_id);
 
                 $data = [
                     'body' => [
@@ -52,10 +71,11 @@ class SalesBillingController extends Controller
                             'email' => $sale->email
                         ],
                         'sale'=>[
+                            'id' => $sale->id,
                             'folio' => $sale->folio,
                             'fullName' => $fullname
                         ],
-                        //'linkToken' => $linkToken,
+                        'token' => $token,
                         'procedure_type' => 'Visa'
                     ],
                     'sender' => 'postmaster@visas-premier.com',
@@ -77,6 +97,10 @@ class SalesBillingController extends Controller
                         ]);
                     }
                 });
+            }
+
+            if($token == 'error'){
+                return response()->json(['success' => false, 'message' => 'Error al crear token']);
             }
 
             \DB::commit();
@@ -143,11 +167,39 @@ class SalesBillingController extends Controller
             $sales_id = '';
 
             foreach($salesPayment as $item){
-                $salesVisasPayment = SalesVisasPayment::where('id', $item['id'])->where('is_confirmed', false)->first();
-                $salesVisasPayment->is_confirmed = $item['is_confirmed'];
-                $salesVisasPayment->save();
+                
+                $sales_id = $item['sales_id'];
 
-                $sales_id = $salesVisasPayment->sales_id;
+                if(isset($item['files'])){
+                    $file = $item['files'][0];
+
+                    $fileName = 'file_'.time().rand(0, 10000);
+                    $extension = $file->getClientOriginalExtension();
+    
+                    $fullnameFile = $fileName.'.'.$extension;
+
+                    $clients_id = $item['clients_id'];
+    
+                    $filePath = 'sales/'.$sales_id.'/clients/'.$clients_id;
+
+                    $salesVisasPayment = SalesVisasPayment::where('id', $item['id'])->where('is_confirmed', false)->first();
+                    $salesVisasPayment->ticket = $filePath.'/'.$fullnameFile;
+                    $salesVisasPayment->is_confirmed = $item['is_confirmed'];                    
+                    $salesVisasPayment->confirmed_by = 'User';
+                    $salesVisasPayment->save();
+            
+                    if($extension == 'pdf'){
+                        $savedFile = (new GeneralController)->saveFileOnStorage($file, $filePath, $fullnameFile);
+                    }else{
+                        $savedFile = (new GeneralController)->saveImageOnStorage($file, $filePath, $fullnameFile);
+                    }
+                    
+                }else{
+                    $salesVisasPayment = SalesVisasPayment::where('id', $item['id'])->where('is_confirmed', false)->first();
+                    $salesVisasPayment->is_confirmed = $item['is_confirmed'];
+                    $salesVisasPayment->save();
+                }
+
             }
 
             $confirmPayments = SalesVisasPayment::where('sales_id', $sales_id)
@@ -182,5 +234,5 @@ class SalesBillingController extends Controller
             ]);
         }
     }
-
+    
 }
