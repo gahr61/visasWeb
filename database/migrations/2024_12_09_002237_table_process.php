@@ -120,6 +120,7 @@ return new class extends Migration
             $table->string('clave_ds_160', 100)->nullable();
             $table->boolean('travel_before')->default(false); //ha viajado en los ulstimos 7 años a otro pais
             $table->string('travel_before_countries', 400)->nullable(); //pais a los que ha viajado
+            $table->string('observations')->nullable();
             $table->timestamps();
 
             $table->foreign('process_id')->references('id')->on('visas')->onDelete('cascade');

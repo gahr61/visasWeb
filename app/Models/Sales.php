@@ -13,4 +13,12 @@ class Sales extends Model
         'total',
         'is_familiar'
     ];
+
+    public function salesClients(){
+        return $this->hasMany(salesClients::class);
+    }
+
+    public function clients(){
+        return $this->hasManyThrough(Clients::class, SalesClients::class);
+    }
 }

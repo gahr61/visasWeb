@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class CountriesSeeder extends Seeder
 {
@@ -12,104 +14,30 @@ class CountriesSeeder extends Seeder
      */
     public function run(): void
     {
-        $countries = [
-            ['id' => 144, 'name' => 'Afganistán'],
-            ['id' => 114, 'name' => 'Albania'],
-            ['id' => 18, 'name' => 'Alemania'],
-            ['id' => 98, 'name' => 'Algeria'],
-            ['id' => 145, 'name' => 'Andorra'],
-            ['id' => 119, 'name' => 'Angola'],
-            ['id' => 4, 'name' => 'Anguilla'],
-            ['id' => 147, 'name' => 'Antigua y Barbuda'],
-            ['id' => 207, 'name' => 'Antillas Holandesas'],
-            ['id' => 91, 'name' => 'Arabia Saudita'],
-            ['id' => 5, 'name' => 'Argentina'],
-            ['id' => 6, 'name' => 'Armenia'],
-            ['id' => 142, 'name' => 'Aruba'],
-            ['id' => 1, 'name' => 'Australia'],
-            ['id' => 2, 'name' => 'Austria'],
-            ['id' => 3, 'name' => 'Azerbaiyán'],
-            ['id' => 80, 'name' => 'Bahamas'],
-            ['id' => 127, 'name' => 'Bahrein'],
-            ['id' => 149, 'name' => 'Bangladesh'],
-            ['id' => 128, 'name' => 'Barbados'],
-            ['id' => 9, 'name' => 'Bélgica'],
-            ['id' => 8, 'name' => 'Belice'],
-            ['id' => 151, 'name' => 'Benín'],
-            ['id' => 10, 'name' => 'Bermudas'],
-            ['id' => 7, 'name' => 'Bielorrusia'],
-            ['id' => 123, 'name' => 'Bolivia'],
-            ['id' => 79, 'name' => 'Bosnia y Herzegovina'],
-            ['id' => 100, 'name' => 'Botsuana'],
-            ['id' => 12, 'name' => 'Brasil'],
-            ['id' => 155, 'name' => 'Brunéi'],
-            ['id' => 11, 'name' => 'Bulgaria'],
-            ['id' => 156, 'name' => 'Burkina Faso'],
-            ['id' => 157, 'name' => 'Burundi'],
-            ['id' => 152, 'name' => 'Bután'],
-            ['id' => 159, 'name' => 'Cabo Verde'],
-            ['id' => 158, 'name' => 'Camboya'],
-            ['id' => 31, 'name' => 'Camerún'],
-            ['id' => 32, 'name' => 'Canadá'],
-            ['id' => 130, 'name' => 'Chad'],
-            ['id' => 81, 'name' => 'Chile'],
-            ['id' => 35, 'name' => 'China'],
-            ['id' => 33, 'name' => 'Chipre'],
-            ['id' => 82, 'name' => 'Colombia'],
-            ['id' => 164, 'name' => 'Comores'],
-            ['id' => 112, 'name' => 'Congo (Brazzaville)'],
-            ['id' => 165, 'name' => 'Congo (Kinshasa)'],
-            ['id' => 166, 'name' => 'Cook, Islas'],
-            ['id' => 84, 'name' => 'Corea del Norte'],
-            ['id' => 69, 'name' => 'Corea del Sur'],
-            ['id' => 168, 'name' => 'Costa de Marfil'],
-            ['id' => 36, 'name' => 'Costa Rica'],
-            ['id' => 71, 'name' => 'Croacia'],
-            ['id' => 113, 'name' => 'Cuba'],
-            ['id' => 22, 'name' => 'Dinamarca'],
-            ['id' => 169, 'name' => 'Djibouti, Yibuti'],
-            ['id' => 103, 'name' => 'Ecuador'],
-            ['id' => 23, 'name' => 'Egipto'],
-            ['id' => 51, 'name' => 'El Salvador'],
-            ['id' => 93, 'name' => 'Emiratos Árabes Unidos'],
-            ['id' => 173, 'name' => 'Eritrea'],
-            ['id' => 52, 'name' => 'Eslovaquia'],
-            ['id' => 53, 'name' => 'Eslovenia'],
-            ['id' => 28, 'name' => 'España'],
-            ['id' => 55, 'name' => 'Estados Unidos'],
-            ['id' => 68, 'name' => 'Estonia'],
-            ['id' => 121, 'name' => 'Etiopía'],
-            ['id' => 175, 'name' => 'Feroe, Islas'],
-            ['id' => 90, 'name' => 'Filipinas'],
-            ['id' => 63, 'name' => 'Finlandia'],
-            ['id' => 176, 'name' => 'Fiyi'],
-            ['id' => 64, 'name' => 'Francia'],
-            ['id' => 180, 'name' => 'Gabón'],
-            ['id' => 181, 'name' => 'Gambia'],
-            ['id' => 21, 'name' => 'Georgia'],
-            ['id' => 105, 'name' => 'Ghana'],
-            ['id' => 143, 'name' => 'Gibraltar'],
-            ['id' => 184, 'name' => 'Granada'],
-            ['id' => 20, 'name' => 'Grecia'],
-            ['id' => 94, 'name' => 'Groenlandia'],
-            ['id' => 17, 'name' => 'Guadalupe'],
-            ['id' => 185, 'name' => 'Guatemala'],
-            ['id' => 186, 'name' => 'Guernsey'],
-            ['id' => 187, 'name' => 'Guinea'],
-            ['id' => 172, 'name' => 'Guinea Ecuatorial'],
-            ['id' => 188, 'name' => 'Guinea-Bissau'],
-            ['id' => 189, 'name' => 'Guyana'],
-            ['id' => 16, 'name' => 'Haiti'],
-            ['id' => 137, 'name' => 'Honduras'],
-            ['id' => 73, 'name' => 'Hong Kong'],
-            ['id' => 14, 'name' => 'Hungría'],
-            ['id' => 25, 'name' => 'India'],
-            ['id' => 74, 'name' => 'Indonesia'],
-            ['id' => 140, 'name' => 'Irak'],
-            ['id' => 26, 'name' => 'Irán'],
-            ['id' => 27, 'name' => 'Irlanda'],
-        ];
+        DB::table('countries')->delete();
 
-        DB::table('countries')->insert($countries);
+        // Ruta al archivo JSON
+        $json = File::get(database_path('data/countries.json'));
+
+        // Remove BOM if it exists
+        if (substr($json, 0, 3) === "\xEF\xBB\xBF") {
+            $json = substr($json, 3);
+        }
+
+        $countries = json_decode($json, true)['countries'];
+
+        if ($countries === null) {
+            throw new \Exception("Invalid JSON data in countries.json.");
+        }
+        
+        // Insertar datos en la tabla
+        foreach ($countries as $country) {
+            DB::table('countries')->insert([
+                'id' => $country['id'],
+                'name' => $country['name'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
