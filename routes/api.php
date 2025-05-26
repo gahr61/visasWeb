@@ -17,6 +17,7 @@ use App\Http\Controllers\SalesTokenController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\OccupationsController;
+use App\Http\Controllers\ProcessController;
 
 Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix'=>'auth'], function(){
@@ -93,6 +94,10 @@ Route::group(['prefix'=>'v1'], function(){
 
         Route::controller(ProceduresController::class)->group(function(){
             Route::get('procedures/visas/{id}/details', 'infoVisasDetails');
+        });
+
+        Route::controller(ProcessController::class)->group(function(){
+            Route::put('process/ds_160/update', 'updateDS160');
         });
 
         Route::controller(SalesController::class)->group(function(){

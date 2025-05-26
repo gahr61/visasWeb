@@ -35,7 +35,7 @@ class SalesController extends Controller
                     ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                     ->join('sales_status', 'sales_status.sales_id', 'sales.id')
                     ->select(
-                        'sales.id', 'branch_office.name as branch_office', 'sales.folio', 'sales.date', 'sales.total',
+                        'sales.id', 'branch_office.name as branch_office', 'sales.folio', 'sales.date', 'sales.total', 'sales.type',
                         'sales_process.advance_payment', 'sales_process.payable',
                         'sales_billing.email', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2',
                         'sales_billing.phone', 'sales_status.status'
@@ -46,10 +46,12 @@ class SalesController extends Controller
 
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
                             ->join('process', 'process.clients_id', 'clients.id')
+                            ->leftJoin('process_details', 'process_details.process_id', 'process.id')
                             ->leftJoin('sales_process_account', 'sales_process_account.clients_id', 'clients.id')
                             ->select(
-                                'clients.id as clients_id', 'clients.names', 'clients.lastname1', 'clients.lastname2', 'clients.curp',
-                                'process.type', 'process.subtype', 'process.age_type', 'process.option_type', 'process.visa_type', 'process.complete',
+                                'clients.id as clients_id', 'clients.names', 'clients.lastname1', 'clients.lastname2', 'clients.curp', 
+                                'process.id as process_id', 'process.type', 'process.subtype', 'process.age_type', 'process.option_type', 'process.visa_type', 'process.complete',
+                                'process_details.clave_ds_160 as ds_160',
                                 'sales_process_account.email'
                             )
                             ->where('sales_clients.sales_id', $id)

@@ -368,7 +368,6 @@ class ClientsController extends Controller
             $processDetails->has_visit_eeuu = $process['has_visit_eeuu'];
             $processDetails->date_visit_eeuu = $process['date_visit_eeuu'];
             $processDetails->time_visit_eeuu = $process['time_visit_eeuu'];
-            $processDetails->clave_ds_160 = $process['clave_ds_160'];
             $processDetails->travel_before = $process['travel_before'];
             $processDetails->travel_before_countries = $process['travel_before_countries'];
             $processDetails->save();
@@ -424,24 +423,6 @@ class ClientsController extends Controller
                     $clientVisa->save();
                 }
             }
-
-             /**
-              * save sales_process_account
-              * if sale is group create an account for each client
-              *
-              */
-            $item = $request->account;
-
-            $account = SalesProcessAccount::find($item['id']);
-
-            if(!isset($account)){
-                $account = new SalesProcessAccount();
-            }
-
-            $account->clients_id = $request->clients_id;
-            $account->email = $item['email'];
-            $account->password = $item['password'];
-            $account->save();
 
             \DB::commit();
 

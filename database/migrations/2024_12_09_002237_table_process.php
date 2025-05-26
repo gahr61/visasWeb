@@ -109,7 +109,7 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('process_id')->unsigned()->index();
             $table->date('travel_date')->nullable();
-            $table->string('addresS_eeuu', 350)->nullable();
+            $table->string('address_eeuu', 350)->nullable();
             $table->date('travel_date_eeuu')->nullable();
             $table->string('time_stay_eeuu', 100)->nullable();
             $table->string('travel_reason', 300)->nullable();
@@ -123,7 +123,7 @@ return new class extends Migration
             $table->string('observations')->nullable();
             $table->timestamps();
 
-            $table->foreign('process_id')->references('id')->on('visas')->onDelete('cascade');
+            $table->foreign('process_id')->references('id')->on('process')->onDelete('cascade');
         });
     }
 
