@@ -9,12 +9,14 @@ use App\Http\Controllers\CountriesController;
 use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\SalesBillingController;
 use App\Http\Controllers\CommissionsController;
+use App\Http\Controllers\PassportController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ProceduresController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SalesTokenController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\OccupationsController;
 
 Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix'=>'auth'], function(){
@@ -50,6 +52,14 @@ Route::group(['prefix'=>'v1'], function(){
 
         Route::controller(ClientsController::class)->group(function(){
             Route::post('clients/confirm/payment', 'clientsConfirmVisaPayment');
+            Route::put('clients/update/{id}', 'clientsUpdate');
+
+            Route::put('clients/address/update', 'clientsUpdateAddress');
+            Route::put('clients/phones/update', 'clientsUpdatePhones');
+            Route::post('clients/parents', 'clientsRelationships');
+            Route::post('clients/occupations', 'clientsSaveUpdateOccupation');
+            Route::post('clients/studies', 'clientsSaveSchools');
+            Route::post('clients/travel', 'clientsSaveTravel');
         });        
 
         Route::controller(CommissionsController::class)->group(function(){
@@ -60,6 +70,18 @@ Route::group(['prefix'=>'v1'], function(){
             Route::put('commissions/update', 'update');
             Route::put('commissions/users/update', 'userUpdate');
             Route::get('commissions/{id}/verify/users', 'verifyCommissionUser');
+        });
+
+        Route::controller(OccupationsController::class)->group(function(){
+            Route::get('occupations/list', 'list');
+            Route::get('occupations/{id}/edit', 'edit');
+            Route::post('occupations', 'store');
+            Route::put('occupations/{id}/update', 'update');
+            Route::delete('occupations/{id}/delete', 'destroy');
+        });
+
+        Route::controller(PassportController::class)->group(function(){
+            Route::put('passport/{id}/update', 'update');
         });
 
         Route::controller(PermissionsController::class)->group(function(){

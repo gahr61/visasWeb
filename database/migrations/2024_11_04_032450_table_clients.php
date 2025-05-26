@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('lastname1', 100);
             $table->string('lastname2', 100)->nullable();
             $table->string('curp', 100);
-            $table->date('birthdate');
+            $table->date('birthdate')->nullable();
             $table->enum('sex', ['M', 'F', 'O'])->nullable();
             $table->string('city', 150)->nullable();
             $table->string('ine', 100)->nullable();

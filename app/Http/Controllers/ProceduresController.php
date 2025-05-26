@@ -17,10 +17,13 @@ use App\Models\ProcessHistory;
 use App\Models\Residence;
 use App\Models\SalesClients;
 use App\Models\SalesProcessAccount;
+use App\Models\Sales;
 
 class ProceduresController extends Controller
 {
     public function infoVisasDetails($id){
+        $sale = Sales::select('type')->where('id', $id)->first();
+
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')                                                
                         ->select(
                             'clients.id', 'clients.names', 'clients.lastname1', 'clients.lastname2', 'clients.curp', 'clients.birthdate', 'clients.sex', 'clients.city', 'clients.ine', 'clients.civil_status', 
@@ -110,7 +113,10 @@ class ProceduresController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $clients
+            'data' => [
+                'sale_type' => $sale->type, 
+                'clients' => $clients
+            ]
         ]);
     }
 }
