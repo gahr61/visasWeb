@@ -18,6 +18,7 @@ use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\OccupationsController;
 use App\Http\Controllers\ProcessController;
+use App\Http\Controllers\ScheduleController;
 
 Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix'=>'auth'], function(){
@@ -98,6 +99,7 @@ Route::group(['prefix'=>'v1'], function(){
 
         Route::controller(ProcessController::class)->group(function(){
             Route::put('process/ds_160/update', 'updateDS160');
+            Route::put('process/account/update', 'processAccountUpdate');
         });
 
         Route::controller(SalesController::class)->group(function(){
@@ -119,6 +121,10 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('concepts/{id}/history', 'history');
             Route::put('concepts/{id}/update', 'update');
             Route::get('concepts/visa', 'visaPrices');
+        });
+
+        Route::controller(ScheduleController::class)->group(function(){
+            Route::put('schedule/details', 'update');
         });
 
         Route::controller(RolesController::class)->group(function(){

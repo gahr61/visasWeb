@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\ProcessDetails;
+use App\Models\SalesProcessAccount;
 
 class ProcessController extends Controller
 {
@@ -39,6 +40,44 @@ class ProcessController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error. '.$ex->getMessage().' '.$ex->getLine()
+            ]);
+        }
+    }
+
+     public function processAccountUpdate(Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $clients = $request->all();
+
+            foreach($clients as $client){
+                $account = SalesProcessAccount::where('clients_id', $client['clients_id'])->first();
+
+                if(!isset($account)){
+                    $account = new SalesProcessAccount();
+                    $account->sales_id = $client['sales_id'];
+                    $account->clients_id = $client['clients_id'];
+                }
+
+                $account->email = $client['user'];
+                $account->password = $client['password'];
+                $account->save();
+            }
+
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Los registros se guardaron correctamente'
+            ]);
+
+        }catch(\Exception $ex){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error, '.$ex->getMessage().' '.$ex->getLine()
             ]);
         }
     }

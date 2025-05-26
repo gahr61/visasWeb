@@ -132,11 +132,14 @@ class SalesController extends Controller
                         ->selectRaw('
                             sales.id, sales.folio, sales.date,
                             COUNT(sales_clients.id) AS no_applicants,
-                            sales_billing.names, sales_billing.lastname1, sales_billing.lastname2, sales_billing.email,
+                            sales_billing.names, sales_billing.lastname1, sales_billing.lastname2, sales_billing.email, sales_billing.phone,
                             sales_status.status
                         ')
                         ->where('sales_status.is_last', true)
-                        ->groupBy('sales.id', 'sales.folio', 'sales.date', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2', 'sales_billing.email', 'sales_status.status')
+                        ->groupBy(
+                            'sales.id', 'sales.folio', 'sales.date', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2', 
+                            'sales_billing.email', 'sales_billing.phone', 'sales_status.status'
+                            )
                         ->get();
 
         $list = array();
@@ -145,7 +148,7 @@ class SalesController extends Controller
             $list[] = [
                 'id' => $visa->id, 'folio' => $visa->folio, 'date' => $visa->date, 'no_applicants' => $visa->no_applicants,
                 'client' => $visa->names.' '.$visa->lastname1.(is_null($visa->lastname2) ? '' : ' '.$visa->lastname2),
-                'email' => $visa->email, 'status' => $visa->status
+                'email' => $visa->email, 'phone'=>$visa->phone, 'status' => $visa->status
             ];
         }
 
