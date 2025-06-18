@@ -16,11 +16,17 @@ use App\Models\SalesStatus;
 class UsersController extends Controller
 {
     public function edit($id){
-        $user = User::join('users_details', 'users_details.users_id', 'users.id')
+        $user = User::join('users_details', 'users_details.users_id', 'users.id')                    
                     ->select(
                         'users.id', 'users.names', 'users.lastname1', 'users.lastname2', 'users.email', 'users.role',
                         'users_details.goal', 'users_details.salary'
                     )->where('users.id', $id)->first();
+        
+        $role = Role::where('name', $user->role)->first();
+
+        $user->role_text = $user->role;
+        $user->role = $role->id;
+        
 
         $user['commissions'] = Commissions::join('users_commissions', 'users_commissions.commissions_id', 'commissions.id')
                                 ->select('commissions.id', 'commissions.concept', 'users_commissions.amount')
@@ -65,12 +71,12 @@ class UsersController extends Controller
                     ->select(
                         'users.id', 'users.names', 'users.lastname1', 'users.lastname2', 'users.email','users.role',
                         'users_details.goal', 'users_details.salary'
-                    )
+                    )->where('users.role', '!=', 'cliente')
                     ->get();
 
         $list = [];
         foreach($users as $user){
-            $role = Role::select('display_name')->where('id', $user->role)->first();
+            $role = Role::select('display_name')->where('name', $user->role)->first();
 
             $user->role = $role->display_name;
 

@@ -26,6 +26,7 @@ use App\Models\SalesProcess;
 use App\Models\SalesStatus;
 use App\Models\SalesUsers;
 use App\Models\Visas;
+use App\Models\User;
 
 class SalesController extends Controller
 {
@@ -96,10 +97,16 @@ class SalesController extends Controller
 
         $documents = ProcessDocuments::select('documents')->where('type', $type)->first();
 
+        $user = SalesUsers::join('users', 'users.id', 'sales_users.users_id')
+                        ->where('sales_id', $sales_id)
+                        ->select('email', 'names', 'lastname1', 'lastname2')
+                        ->first();
+
         $procedure = [
             'sale' => $sale,
             'clients' => $salesClients,
-            'documents' => $documents
+            'documents' => $documents,
+            'user' => $user
         ];
 
         $data = [
@@ -245,6 +252,22 @@ class SalesController extends Controller
                 'phone' => $billing['phone']
             ]);
 
+
+            /** create user account  */
+            $user = new User();
+            $user->names =  $billing['names'];
+            $user->lastname1 =  $billing['lastname1'];
+            $user->lastname2 =  $billing['lastname2'];
+            $user->email =  stryolower($billing['names'].'.'.$billing['lastname1'].'.'.\Str::random(4).'@visas-premier.com');
+            $user->password =  bcrypt('@cc350.T3mp.2025');
+            $user->role = 'cliente';
+            $user->save();
+
+            $sales_user = new SalesUsers();
+            $sales_user->sales_id = $sales->id;
+            $sales_user->users_id = $user->id;
+            $sales_user->save();
+
             /** sales status */
             SalesStatus::create([
                 'sales_id' => $sales->id,
@@ -378,4 +401,26 @@ class SalesController extends Controller
             ]);
         }
     }
+
+    public function sendAccessVisaForm(Request $request){
+        $this->sendWelcomeEmail(2, 'Visa');
+        /*
+        $user = SalesUsers::join('users', 'users.id', 'sales_users.users_id')
+                    ->select('users.email', 'users.names', 'users.lastname1', 'users.lastname2')
+                    ->where('sales_users.sales_id', $request->sales_id)
+                    ->first();         
+
+        $sale = [
+            'user_name' => $user->names.' '.$user->lastname1.(is_null($user->lastname2) ? '' : ' '.$user->lastname2 ),
+            'user_email' => $user->email
+        ];
+
+         $data = [
+            'body' => $sale,
+            'sender' => 'postmaster@visas-premier.com',
+            'subject' => 'Formulario - detalles de visa',
+            'receiver' => $user->email
+        ];*/
+    }
 }
+

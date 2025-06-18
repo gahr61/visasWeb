@@ -143,6 +143,14 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="container flex justify-content-center" style="padding:5px">
+                                <p>Te damos la bienvenida a nuestra plataforma. A continuación te compartimos tus datos de acceso temporal.</p>
+                                <hr/>
+                                <p><b>Usuario: </b> {{$data['body']['user']['email']}}</p>
+                                <p><b>Contraseña: </b> @cc350.T3mp.2025</p>
+
+                                <hr/>
+                            </div>
                             <h4 style="padding:0px 0px 0px 5px;" class="subtitle center">Clientes</h4>
                             <div class="container flex justify-content-center" style="padding:5px;">
                                 <div class="col-lg-8">
