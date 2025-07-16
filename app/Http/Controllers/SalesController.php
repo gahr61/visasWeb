@@ -35,14 +35,21 @@ class SalesController extends Controller
                     ->join('sales_process', 'sales_process.sales_id', 'sales.id')
                     ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                     ->join('sales_status', 'sales_status.sales_id', 'sales.id')
-                    ->select(
-                        'sales.id', 'branch_office.name as branch_office', 'sales.folio', 'sales.date', 'sales.total', 'sales.type',
-                        'sales_process.advance_payment', 'sales_process.payable',
-                        'sales_billing.email', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2',
-                        'sales_billing.phone', 'sales_status.status'
-                    )
+                    ->leftJoin('sales_payment', 'sales_payment.sales_id', 'sales.id')
+                    ->selectRaw('
+                        sales.id, branch_office.name as branch_office, sales.folio, sales.date, sales.total, sales.type,
+                        SUM(sales_payment.amount) as payments,
+                        sales_process.advance_payment, sales_process.payable,
+                        sales_billing.email, sales_billing.names, sales_billing.lastname1, sales_billing.lastname2,
+                        sales_billing.phone, sales_status.status
+                    ')
                     ->where('sales_status.is_last', true)
                     ->where('sales.id', $id)
+                    ->groupBy(
+                        'sales.id', 'branch_office.name', 'sales.folio', 'sales.date', 'sales.total', 'sales.type',
+                        'sales_process.advance_payment', 'sales_process.payable', 'sales_billing.email', 'sales_billing.names',
+                        'sales_billing.lastname1', 'sales_billing.lastname2', 'sales_billing.phone', 'sales_status.status'
+                    )
                     ->first();
 
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')

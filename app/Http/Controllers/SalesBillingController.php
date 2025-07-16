@@ -8,6 +8,7 @@ use App\Models\SalesBilling;
 use App\Models\SalesClients;
 use App\Models\SalesStatus;
 use App\Models\SalesVisasPayment;
+use App\Models\SalesPayment;
 
 class SalesBillingController extends Controller
 {
@@ -231,6 +232,39 @@ class SalesBillingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage().' '.$e->getLine()
+            ]);
+        }
+    }
+
+    /**
+     * Add payment to sale vida
+     */
+    public function visaAddPay(Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $payment = new SalesPayment();
+            $payment->sales_id = $request->sales_id;
+            $payment->method_payment = $request->method_payment;
+            $payment->amount = $request->amount;
+            $payment->status = 'Pagado';
+            $payment->platform = 'Sistema';
+            $payment->receipt = $request->receipt;
+            $payment->reference = $request->reference;
+            $payment->save();
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'El pago se realizao correctamente'
+            ]);
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ]);
         }
     }

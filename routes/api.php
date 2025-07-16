@@ -19,6 +19,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\OccupationsController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\WebController;
 
 Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix'=>'auth'], function(){
@@ -31,12 +32,15 @@ Route::group(['prefix'=>'v1'], function(){
         });
     });
 
+    Route::post('web/contact', [WebController::class, 'contact_form']);
+
     //verify token
     Route::controller(SalesTokenController::class)->group(function(){
         Route::post('sales/validate/token', 'verifyToken');
     });
 
-    Route::post('sales/clients/confirm', [SalesBillingController::class, 'visaPaymentUpdate']);
+
+    Route::post('sales/clients/confirm', [SalesBillingController::class, 'visaPaymentUpdate']);    
     
     Route::group(['middleware' => 'auth:sanctum'], function(){
         Route::controller(BranchOfficeController::class)->group(function(){
@@ -112,6 +116,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('sales/visa/payment', 'sendVisaPayment');
             Route::post('sales/visa/payment/confirm', 'visaPaymentUpdate');
             Route::get('sales/visa/payment/list/{id}', 'visaPaymentList');
+            Route::post('sales/visa/pay', 'visaAddPay');
         });
 
         Route::controller(SalesConceptsController::class)->group(function(){
