@@ -106,6 +106,7 @@ class SalesController extends Controller
 
         $user = SalesUsers::join('users', 'users.id', 'sales_users.users_id')
                         ->where('sales_id', $sales_id)
+                        ->where('users.role', 'cliente')
                         ->select('email', 'names', 'lastname1', 'lastname2')
                         ->first();
 
@@ -250,25 +251,37 @@ class SalesController extends Controller
 
             /**sales billing */
             $billing = $request->billing;
-            SalesBilling::create([
-                'sales_id' => $sales->id,
-                'email' => $billing['email'],
-                'names' => $billing['names'],
-                'lastname1' => $billing['lastname1'],
-                'lastname2' => $billing['lastname2'],
-                'phone' => $billing['phone']
-            ]);
+
+            SalesBilling::updateOrCreate(
+                ['email' => $billing['email']],
+                [
+                    'sales_id' => $sales->id,
+                    'email' => $billing['email'],
+                    'names' => $billing['names'],
+                    'lastname1' => $billing['lastname1'],
+                    'lastname2' => $billing['lastname2'],
+                    'phone' => $billing['phone']
+                ]
+            );
 
 
             /** create user account  */
-            $user = new User();
-            $user->names =  $billing['names'];
-            $user->lastname1 =  $billing['lastname1'];
-            $user->lastname2 =  $billing['lastname2'];
-            $user->email =  stryolower($billing['names'].'.'.$billing['lastname1'].'.'.\Str::random(4).'@visas-premier.com');
-            $user->password =  bcrypt('@cc350.T3mp.2025');
-            $user->role = 'cliente';
-            $user->save();
+            $user = User::where('names', $billing['names'])
+                            ->where('lastname1', $billing['lastname1'])
+                            ->where('lastname2', $billing['lastname2'])
+                            ->where('role', 'cliente')
+                            ->first();
+
+            if(is_null($user)){
+                $user = new User();
+                $user->names =  $billing['names'];
+                $user->lastname1 =  $billing['lastname1'];
+                $user->lastname2 =  $billing['lastname2'];
+                $user->email =  strtolower($billing['names'].'.'.$billing['lastname1'].'.'.\Str::random(4).'@visas-premier.com');
+                $user->password =  bcrypt('@cc350.T3mp.2025');
+                $user->role = 'cliente';
+                $user->save();
+            }
 
             $sales_user = new SalesUsers();
             $sales_user->sales_id = $sales->id;
@@ -296,7 +309,12 @@ class SalesController extends Controller
             /** clients */
             $clients = $request->clients;
             foreach($clients as $item){
-                $client = new Clients();
+                if(isset($item['client']['id'])){
+                    $client = Clients::where('id', $item['client']['id'])->first();
+                }else{
+                    $client = new Clients();
+                }
+                
                 $client->names = $item['client']['names'];
                 $client->lastname1 = $item['client']['lastname1'];
                 $client->lastname2 = $item['client']['lastname2'];
@@ -310,7 +328,12 @@ class SalesController extends Controller
                 /** clients phones */
                 $phones = $item['phones'];
                 foreach($phones as $phone){
-                    $clientPhones = new ClientsPhones();
+                    if(isset($phone['id'])){
+                        $clientPhones = ClientsPhones::where('id', $phone['id'])->first();
+                    }else{
+                        $clientPhones = new ClientsPhones();
+                    }
+                    
                     $clientPhones->clients_id = $client->id;
                     $clientPhones->type = $phone['type'];
                     $clientPhones->number = $phone['number'];
@@ -342,7 +365,15 @@ class SalesController extends Controller
                 ]);
 
                 /** passport */
-                $passport = new Passport();
+                $passport = null;
+                if(isset($item['passport']['id'])){
+                    $passport = Passport::where('id', $item['passport']['id'])->first();
+                }
+                
+                if(is_null($passport)){
+                    $passport = new Passport();
+                }
+                
                 $passport->process_id = $process->id;
                 $passport->number = $item['passport']['number'];
                 $passport->expedition_date = $item['passport']['expedition_date'];

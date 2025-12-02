@@ -18,6 +18,7 @@ use App\Models\Visas;
 use App\Models\ProcessHistory;
 use App\Models\ClientsVisaHistory;
 use App\Models\SalesProcessAccount;
+use App\Models\Passport;
 
 class ClientsController extends Controller
 {
@@ -440,6 +441,62 @@ class ClientsController extends Controller
             ]);
         }
 
+    }
+
+    /**
+     * autocomplete search clients
+     */
+    public function clientsAutocomplete(Request $request){
+
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        $results = Clients::where(function ($q) use ($query) {
+            $q->where('names', 'like', "%$query%")
+              ->orWhere('lastname1', 'like', "%$query%")
+              ->orWhere('lastname2', 'like', "%$query%")
+              ->orWhere('curp', 'like', "%$query%");
+        })
+        ->select(
+            'id', 'names', 'lastname1', 'lastname2', 'curp'
+        )
+        ->limit(10)
+        ->get();
+
+        return response()->json(['success' => true, 'data'=>$results]);
+    }
+
+    /**
+     * get values from client to load into visas form
+     */
+    public function clientsData($id){
+        $clients = Clients::where('id', $id)
+                        ->select(
+                            'clients.id', 'clients.names', 'clients.lastname1', 'clients.lastname2', 'clients.curp',
+                            'clients.birthdate', 'clients.country_birth_id as country', 'clients.state_birth_id as state', 'clients.city_birth as city'
+                        )
+                        ->first();
+
+        $clients['phone'] = ClientsPhones::where('clients_id', $id)
+                                ->where('type', 'Celular')
+                                ->select('id', 'number')
+                                ->first();
+
+        $passport = Passport::join('process', 'process.id', 'passport.process_id')
+                            ->where('process.clients_id', $id)
+                            ->select('passport.id', 'passport.number', 'passport.expedition_date', 'passport.expiration_date')
+                            ->orderBy('passport.id', 'DESC')
+                            ->first();
+
+        $clients['passport'] = $passport;
+
+        return response()->json([
+            'success' => true,
+            'data' => $clients
+        ]);
     }
 
 }

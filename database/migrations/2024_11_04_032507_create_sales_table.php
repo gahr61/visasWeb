@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->string('folio', 100);
             $table->decimal('total', 8, 2);
-            $table->enum('type',['Venta General', 'Familiar', 'Personal', 'Grupo'])->default('Venta General');
+            $table->enum('type',['Venta General', 'Familiar', 'Individual', 'Grupo'])->default('Venta General');
             $table->enum('from', ['Web', 'Sistema'])->default('Web');
             $table->timestamps();
 
@@ -121,7 +121,12 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('sales_id')->unsigned()->index();
             $table->string('uuid')->nullable();
-            $table->enum('method_payment', ['Efectivo', 'Tarjeta'])->default('Efectivo');
+            $table->enum('method_payment', [
+                'Efectivo', 
+                'Tarjeta', 
+                'Depósito Bancario', 
+                'Transferencia Electroníca'
+            ])->default('Efectivo');
             $table->decimal('amount', 8, 2);
             $table->string('url_receipt', 200)->nullable();
             $table->string('url_payment', 200)->nullable();

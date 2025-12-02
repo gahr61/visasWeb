@@ -66,6 +66,8 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('clients/occupations', 'clientsSaveUpdateOccupation');
             Route::post('clients/studies', 'clientsSaveSchools');
             Route::post('clients/travel', 'clientsSaveTravel');
+            Route::get('clients/autocomplete', 'clientsAutocomplete');
+            Route::get('clients/data/{id}', 'clientsData');
         });        
 
         Route::controller(CommissionsController::class)->group(function(){

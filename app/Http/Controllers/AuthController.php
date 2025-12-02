@@ -45,6 +45,13 @@ class AuthController extends Controller
                         (!is_null($user->lastname1) ? ' '.$user->lastname1 : '').
                         (!is_null($user->lastname2) ? ' '.$user->lastname2 : '');
 
+        $permissions = array();
+        
+        foreach($user->permissions as $p){
+            //echo $p->name;
+            array_push($permissions, $p->name);
+        };
+
         return response()->json([
             'success' => true,
             'message' => 'Se inicio sesión corerctamente',
@@ -55,6 +62,7 @@ class AuthController extends Controller
                     'name' => $user_name,
                     'change_password_required' => $user->change_password_required
                 ],
+                'permissions' => $permissions,
                 'expires_at' => Carbon::parse($token->expires_at)->toDateString()
             ]            
         ]);

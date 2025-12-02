@@ -16,8 +16,6 @@ class OccupationsSeeder extends Seeder
         DB::table('occupations')->delete();
         
         DB::table('occupations')->insert([
-            
-
             ['name' => 'Asistente administrativo'],
             ['name' => 'Secretaria'],
             ['name' => 'Recepcionista'],
@@ -44,7 +42,7 @@ class OccupationsSeeder extends Seeder
             ['name' => 'Mesero/a'],
             ['name' => 'Bartender'],
             ['name' => 'Estilista'],
-            ['name' => 'Conductor/a'],
+            ['name' => 'Conductor/a'], // Unificado con 'Chofer'
             ['name' => 'Vigilante'],
             ['name' => 'Albañil'],
             ['name' => 'Carpintero/a'],
@@ -61,7 +59,6 @@ class OccupationsSeeder extends Seeder
             ['name' => 'Actor/actriz'],
             ['name' => 'Músico'],
             ['name' => 'Editor/a de video'],
-            ['name' => 'Chofer'],
             ['name' => 'Repartidor/a'],
             ['name' => 'Operador/a de montacargas'],
             ['name' => 'Despachador/a'],
@@ -73,7 +70,29 @@ class OccupationsSeeder extends Seeder
             ['name' => 'Jardinero/a'],
             ['name' => 'Ingeniero/a ambiental'],
             ['name' => 'Veterinario/a'],
-            ['name' => 'Otro'],
-        ]);
+            ['name' => 'Cajero/a'],
+            ['name' => 'Panadero/a'],
+            ['name' => 'Pastelero/a'],
+            ['name' => 'Empleado de limpieza'],
+            ['name' => 'Supervisor/a de almacén'],
+            ['name' => 'Ayudante general'],
+            ['name' => 'Call center / Teleoperador/a'],
+            ['name' => 'Diseñador/a de moda'],
+            ['name' => 'Ingeniero/a civil'],
+            ['name' => 'Ingeniero/a eléctrico/a'],
+            ['name' => 'Ingeniero/a mecánico/a'],
+            ['name' => 'Arquitecto/a'],
+            ['name' => 'Abogado/a'],
+            ['name' => 'Juez/a'],
+            ['name' => 'Policía'],
+            ['name' => 'Bombero/a'],
+            ['name' => 'Soldado / Militar'],
+            ['name' => 'Notificador/a judicial'],
+            ['name' => 'Técnico/a en mantenimiento'],
+            ['name' => 'Encargado/a de tienda'],
+            ['name' => 'Supervisor/a de producción'],
+            ['name' => 'Otro']
+        ]
+);
     }
 }

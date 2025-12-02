@@ -143,6 +143,14 @@ class UsersController extends Controller
             $user->password = bcrypt($request->password);
             $user->save();
 
+            $user->assignRole($user->role);
+
+            $role = Role::select('id')->where('name', $user->role)->first();
+
+            $role->permissions->each(function($p) use($user){
+                $user->givePermissionTo($p->name);
+            });
+
             $details = new UserDetails();
             $details->users_id = $user->id;
             $details->goal = $request->goal;
@@ -310,6 +318,22 @@ class UsersController extends Controller
             $user->fill($request->all());
             $user->save();
 
+            //remove role and permissions
+            $role = Role::select('id')->where('name', $user->role)->first();
+            $role->permissions->each(function($p) use($user){
+                $user->revokePermissionTo($p->name);
+            });
+
+            $user->removeRole($user->role);
+
+            //reassign role and permission
+            $role = Role::select('id')->where('name', $request->role)->first();
+
+            $user->assignRole($request->role);
+            $role->permissions->each(function($p) use($user){
+                $user->givePermissionTo($p->name);
+            });
+
             $details = UserDetails::where('users_id', $id)->first();
             $details->goal = $request->goal;
             $details->salary = $request->salary;
@@ -348,7 +372,7 @@ class UsersController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage().' '.$e->getLine()
             ]);
         }
     }
