@@ -19,6 +19,7 @@ use App\Models\ProcessHistory;
 use App\Models\ClientsVisaHistory;
 use App\Models\SalesProcessAccount;
 use App\Models\Passport;
+use App\Models\ClientsSocialNetwork;
 
 class ClientsController extends Controller
 {
@@ -336,12 +337,16 @@ class ClientsController extends Controller
             //save residence
             $itemResidence = $request->residence;
 
-            $residence = Residence::find($itemResidence['id']);
+            if(isset($itemResidence['id'])){
+                $residence = Residence::find($itemResidence['id']);
 
-            if(!isset($residence)){
+                if(!isset($residence)){
+                    $residence = new Residence();
+                }
+            }else{
                 $residence = new Residence();
             }
-
+            
             $residence->process_id = $itemResidence['process_id'];
             $residence->full_name = $itemResidence['full_name'];
             $residence->cel_phone = $itemResidence['cel_phone'];
@@ -353,14 +358,14 @@ class ClientsController extends Controller
             //save process details
             $process =$request->process_details;
 
-            $processDetails = ProcessDetails::find($process->id);
+            $processDetails = ProcessDetails::find($process['id']);
 
             if(!isset($processDetails)){
                 $processDetails = new ProcessDetails();
             }
 
             $processDetails->process_id = $process['id'];
-            $processDetails->travel_date = $process['travel_date'];
+            $processDetails->travel_date = $process['travel_date'] ?? $process['travel_date_eeuu'];
             $processDetails->address_eeuu = $process['address_eeuu'];
             $processDetails->travel_date_eeuu = $process['travel_date_eeuu'];
             $processDetails->time_stay_eeuu = $process['time_stay_eeuu'];
@@ -371,6 +376,9 @@ class ClientsController extends Controller
             $processDetails->time_visit_eeuu = $process['time_visit_eeuu'];
             $processDetails->travel_before = $process['travel_before'];
             $processDetails->travel_before_countries = $process['travel_before_countries'];
+            $processDetails->visa_approved = $process['visa_approved'];
+            $processDetails->travel_before_countries = $process['travel_before_countries'];
+            $processDetails->travel_countries = $process['travel_countries'];
             $processDetails->save();
 
             /**
@@ -378,8 +386,10 @@ class ClientsController extends Controller
              */
             $history = $request->history;
 
-            $processHistory = ProcessHistory::find($history['id']);
-
+            if(isset($history['id'])){
+                $processHistory = ProcessHistory::find($history['id']);
+            }
+            
             if(!isset($processHistory)){
                 $processHistory = new ProcessHistory();                
             }
@@ -387,7 +397,7 @@ class ClientsController extends Controller
             $processHistory->process_id = $process['id'];
             $processHistory->has_tried_visa = $history['has_tried_visa'];
             $processHistory->date = $history['date'];
-            $processHistory->observations = $history['observations'];
+            $processHistory->observations = $history['observations'] ?? "";
             $processHistory->save();
 
             /**
@@ -400,8 +410,10 @@ class ClientsController extends Controller
             $visaData = $request->visa;
 
             if($visaData){
-                $visa = Visas::find($visaData['id']);
-                
+                if(isset($visa['id'])){
+                    $visa = Visas::find($visaData['id']);
+                }
+
                 if(!isset($visa)){
                     $visa = new Visas();                    
                 }
@@ -409,7 +421,7 @@ class ClientsController extends Controller
                 $visa->number = $visaData['number'];
                 $visa->expedition_date = $visaData['expedition_date'];
                 $visa->expiration_date = $visaData['expiration_date'];
-                $visa->sav();
+                $visa->save();
 
                 $clientVisa = ClientsVisaHistory::where('clients_id', $request->clients_id)
                                     ->where('number', $visaData['number'])
@@ -425,10 +437,26 @@ class ClientsController extends Controller
                 }
             }
 
+            $networks = $request->social_networks;
+
+            foreach($networks as $item){
+                $social = ClientsSocialNetwork::where('id', $item['id'])->first();
+
+                if(!isset($social)){
+                    $social = new ClientsSocialNetwork();
+                }
+
+                $social->clients_id = $item['clients_id'];
+                $social->network = $item['socialNetwork'];
+                $social->username = $item['username'];
+                $social->url = $item['url'];
+                $social->save();
+            }
+
             \DB::commit();
 
             return response()->json([
-                'message' => true,
+                'success' => true,
                 'message' => 'Datos generales de viaje se registraron correctamente'
             ]);
 

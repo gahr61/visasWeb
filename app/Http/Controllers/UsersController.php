@@ -117,6 +117,7 @@ class UsersController extends Controller
     public function sales(){
         $users = User::select('id', 'names', 'lastname1', 'lastname2')
                         ->where('role', '!=', 'administrador_de_sistema')
+                        ->where('role', '!=', 'cliente')
                         ->get();
 
         $list = [];

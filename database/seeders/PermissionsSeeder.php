@@ -13,8 +13,8 @@ class PermissionsSeeder extends Seeder
      * @return void
      */
     public function run()
-    {
-        \DB::table('permissions')->delete();
+    {        
+        //\DB::table('permissions')->truncate();
 
 
         \DB::table('permissions')->insert([
@@ -270,6 +270,13 @@ class PermissionsSeeder extends Seeder
             'description'   => 'Permite eliminar un visa',
             'guard_name'	=> 'web'
         ]);
+        \DB::table('permissions')->insert([
+            'name'          => 'procedure_visa_view_form',
+            'display_name'  => 'Ver formulario',
+            'description'   => 'Permite ver el formulario de llenado para tramite de visa',
+            'guard_name'	=> 'web'
+        ]);
+
        
     }   
 }

@@ -20,93 +20,65 @@
                 border:1px solid;
             }
 
-            .col-lg-1 {
-                flex: 0 0 auto;
-                width: 8.33333333%;
-            }
-            .col-lg-2 {
-                flex: 0 0 auto;
-                width: 16.66666667%;
-            }
-            .col-lg-3 {
-                flex: 0 0 auto;
-                width: 25%;
-            }
-            .col-lg-4 {
-                flex: 0 0 auto;
-                width: 33.33333333%;
-            }
-            .col-lg-5 {
-                flex: 0 0 auto;
-                width: 41.66666667%;
-            }
-            .col-lg-6 {
-                flex: 0 0 auto;
-                width: 50%;
-            }
-            .col-lg-7 {
-                flex: 0 0 auto;
-                width: 58.33333333%;
-            }
-            .col-lg-8 {
-                flex: 0 0 auto;
-                width: 66.66666667%;
-            }
-            .col-lg-9 {
-                flex: 0 0 auto;
-                width: 75%;
-            }
-            .col-lg-10 {
-                flex: 0 0 auto;
-                width: 83.33333333%;
-            }
-            .col-lg-11 {
-                flex: 0 0 auto;
-                width: 91.66666667%;
-            }
-            .col-lg-12 {
-                flex: 0 0 auto;
-                width: 100%;
-            }
+            .col-lg-1 { width: 8.33333333%; flex: 0 0 auto; }
+            .col-lg-2 { width: 16.66666667%; flex: 0 0 auto; }
+            .col-lg-3 { width: 25%; flex: 0 0 auto; }
+            .col-lg-4 { width: 33.33333333%; flex: 0 0 auto; }
+            .col-lg-5 { width: 41.66666667%; flex: 0 0 auto; }
+            .col-lg-6 { width: 50%; flex: 0 0 auto; }
+            .col-lg-7 { width: 58.33333333%; flex: 0 0 auto; }
+            .col-lg-8 { width: 66.66666667%; flex: 0 0 auto; }
+            .col-lg-9 { width: 75%; flex: 0 0 auto; }
+            .col-lg-10 { width: 83.33333333%; flex: 0 0 auto; }
+            .col-lg-11 { width: 91.66666667%; flex: 0 0 auto; }
+            .col-lg-12 { width: 100%; flex: 0 0 auto; }
 
-            .mt-2 {
-                margin-top: 0.5rem !important;
-            }
-            .mb-2 {
-                margin-bottom: 0.5rem !important;
-            }
-
-
+            .mt-2 { margin-top: 0.5rem !important; }
+            .mb-2 { margin-bottom: 0.5rem !important; }
 
             img{
                 width:100%;
             }
+
             body,
             .text{
                 font-family: sans-serif;
             }
+
             .title{
                 text-align: center;
                 color:#053067;
                 margin-bottom: 0;
                 margin-top:8px;
             }
+
             .subtitle{
                 text-align: center;
                 margin-top:0;
                 color:#0a437f;
             }
+
             .content{
                 font-weight: 100;   
             }
+
             .center{
                 text-align:center;
             }
+
             .number{
                 color:#f01134;
                 font-weight: bold;
             }
-           
+
+            .disclaimer-box {
+                background: #fff3cd;
+                border-left: 5px solid #ff9800;
+                padding: 15px;
+                margin-top: 10px;
+                margin-bottom: 20px;
+                font-size: 14px;
+            }
         </style>
     </head>
     <body>
@@ -128,7 +100,16 @@
                             o con SRE (Secretaria de Relaciones Exteriores) (si el trámite es pasaporte), 
                             <b> Espera a que nos contactemos contigo notificando el estatus de tu trámite.</b>
                         </p>
+
+                        <!-- 🔶 DISCLAIMER AGREGADO -->
+                        <div class="disclaimer-box">
+                            <b>Disclaimer:</b> Visas Premier no se hace responsable por cambios de fechas, reprogramaciones, cancelaciones, retrasos o cualquier acción realizada por el Consulado, la SRE o los Centros de Atención al Solicitante (CAS).  
+                            Todas las citas y procesos dependen exclusivamente de las autoridades correspondientes.
+                        </div>
+                        <!-- 🔶 FIN DISCLAIMER -->
+
                         <hr/>
+
                         <div class="mt-2">                            
                             <h4 style="padding:5px;" class="subtitle center">Información de trámite</h4>
                             <div class="container flex justify-content-center" style="padding:5px;">
@@ -143,15 +124,20 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div class="container flex justify-content-center" style="padding:5px">
                                 <p>Te damos la bienvenida a nuestra plataforma. A continuación te compartimos tus datos de acceso temporal.</p>
                             </div>    
+                            
                             <hr/>
-                            <div  style="display:block; padding:5px; flex-direction:column;">
+
+                            <div style="display:block; padding:5px; flex-direction:column;">
                                 <p><b>Usuario: </b> {{$data['body']['user']['email']}}</p>
                                 <p><b>Contraseña: </b> @cc350.T3mp.2025</p>                                                            
                             </div>
+
                             <hr/>
+
                             <h4 style="padding:0px 0px 0px 5px;" class="subtitle center">Clientes</h4>
                             <div class="container flex justify-content-center" style="padding:5px;">
                                 <div class="col-lg-8">
@@ -170,7 +156,7 @@
                                                         {{
                                                             $c['type'].' - '.
                                                             $c['age_type'].' - '.
-                                                            ($c['visa_type'] != null ? $c['visa_type'].' - ' : '').
+                                                            ($c['visa_type'] != null ? $c['visa_type'].' - ' : '').                            
                                                             $c['subtype'].
                                                             (($c['option_type'] != null && $c['option_type'] != '') ? ' - '.$data['cuerpo']['option_type'] : '')
                                                         }}
@@ -185,13 +171,22 @@
                         </div>
                         
                         <hr/>
+
                         <div class="mt-2">                            
                             <h4 style="padding:5px; color:red;" class="subtitle center">Información importante</h4>
-                            <h3 class="center">Es importante que al acudir a nuestras oficinas presente la documentación mostrada arriba</h3>
+
                             <h3 class="center">
-                                O si lo prefieres puedes enviarnos una foto de tu documentación al correo tramites@visas-premier.com indicando en 
-                                el asunto tu número de folio o envianos por Whatsapp al número <a href="https://wa.me/14441431560" target="_blank">4441431560</a></h3>
+                                Es importante que al acudir a nuestras oficinas presentes tu pasaporte y, en caso de contar con ella, tu visa.
+                            </h3>
+
+                            <h3 class="center">
+                                Si lo prefieres, también puedes enviarnos fotografías claras de tu documentación (parte frontal y parte trasera) al correo 
+                                <b>tramites@visas-premier.com</b>, indicando en el asunto tu número de folio, o enviarlas por WhatsApp al número 
+                                <a href="https://wa.me/14441431560" target="_blank">4441431560</a>.
+                            </h3>
+
                         </div>
+
                         <div class="mt-2">                            
                             <h3 class="center">Si tienes alguna duda puedes acudir a nuestas oficinas</h3>
                             <div class="container flex justify-content-center" style="padding:5px;">
@@ -211,6 +206,7 @@
                                 </div>
                             </div>                            
                         </div>
+
                     </div>
                 </div>
             </div>

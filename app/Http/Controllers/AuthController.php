@@ -60,7 +60,8 @@ class AuthController extends Controller
                 'user' => [
                     'id' => $user->id,
                     'name' => $user_name,
-                    'change_password_required' => $user->change_password_required
+                    'change_password_required' => $user->change_password_required,
+                    'role' => $user->role
                 ],
                 'permissions' => $permissions,
                 'expires_at' => Carbon::parse($token->expires_at)->toDateString()

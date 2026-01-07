@@ -111,6 +111,7 @@ Route::group(['prefix'=>'v1'], function(){
         Route::controller(SalesController::class)->group(function(){
             Route::post('sales/visa', 'visa_store');
             Route::get('sales/visa/list', 'visa_list');
+            Route::get('sales/visa/client/list', 'visa_client_list');
             Route::get('sales/{id}/details', 'info');
         });
 

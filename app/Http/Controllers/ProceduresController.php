@@ -18,6 +18,7 @@ use App\Models\Residence;
 use App\Models\SalesClients;
 use App\Models\SalesProcessAccount;
 use App\Models\Sales;
+use App\Models\ClientsSocialNetwork;
 
 class ProceduresController extends Controller
 {
@@ -85,8 +86,8 @@ class ProceduresController extends Controller
             $client['process_details'] = ProcessDetails::select(
                                                     'id', 'travel_date', 'address_eeuu', 'travel_date_eeuu',
                                                     'time_stay_eeuu', 'travel_reason', 'cover_expenses', 'has_visit_eeuu',
-                                                    'date_visit_eeuu', 'time_visit_eeuu', 'clave_ds_160', 
-                                                    'travel_before', 'travel_before_countries', 'observations'
+                                                    'date_visit_eeuu', 'time_visit_eeuu', 'clave_ds_160', 'visa_approved',
+                                                    'travel_before', 'travel_before_countries', 'travel_countries', 'observations'
                                                 )
                                                 ->where('process_id', $process_id)
                                                 ->orderBy('id', 'desc')
@@ -107,6 +108,10 @@ class ProceduresController extends Controller
                                             )
                                             ->orderBy('id', 'desc')
                                             ->first();
+
+            $client['social'] = ClientsSocialNetwork::where('clients_id', $client->id)
+                                            ->select('id', 'clients_id', 'network as socialNetwork', 'username', 'url')
+                                            ->get();
             
                     
         }

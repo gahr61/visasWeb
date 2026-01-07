@@ -173,6 +173,36 @@ class SalesController extends Controller
         ]);
     }
 
+    /** visa procedure list */
+    public function visa_client_list(){
+        $user = \Auth::user();
+    
+        $visas = Sales::join('sales_users', 'sales_users.sales_id', 'sales.id')
+                        ->join('sales_status', 'sales_status.sales_id', 'sales.id')
+                        ->selectRaw('
+                            sales.id, sales.folio, sales.date, sales_status.status
+                        ')
+                        ->where('sales_status.is_last', true)
+                        ->where('sales_users.users_id', $user->id)
+                        ->groupBy(
+                            'sales.id', 'sales.folio', 'sales.date', 'sales_status.status'
+                        )
+                        ->get();
+
+        $list = array();
+
+        foreach($visas as $visa){
+            $list[] = [
+                'id' => $visa->id, 'folio' => $visa->folio, 'date' => $visa->date, 'status' => $visa->status
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $list
+        ]);
+    }
+
     /** save visa procedure */
     public function visa_store(Request $request){
         try{
@@ -423,7 +453,7 @@ class SalesController extends Controller
             }
 
             /** send email */
-            $this->sendWelcomeEmail($sales->id, 'Visa');
+            //$this->sendWelcomeEmail($sales->id, 'Visa');
 
             \DB::commit();
 
