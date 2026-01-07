@@ -364,7 +364,7 @@ class ClientsController extends Controller
                 $processDetails = new ProcessDetails();
             }
 
-            $processDetails->process_id = $process['id'];
+            $processDetails->process_id = $itemResidence['process_id'];
             $processDetails->travel_date = $process['travel_date'] ?? $process['travel_date_eeuu'];
             $processDetails->address_eeuu = $process['address_eeuu'];
             $processDetails->travel_date_eeuu = $process['travel_date_eeuu'];
@@ -394,7 +394,7 @@ class ClientsController extends Controller
                 $processHistory = new ProcessHistory();                
             }
 
-            $processHistory->process_id = $process['id'];
+            $processHistory->process_id = $itemResidence['process_id'];
             $processHistory->has_tried_visa = $history['has_tried_visa'];
             $processHistory->date = $history['date'];
             $processHistory->observations = $history['observations'] ?? "";
@@ -417,7 +417,7 @@ class ClientsController extends Controller
                 if(!isset($visa)){
                     $visa = new Visas();                    
                 }
-                $visa->process_id = $process['id'];
+                $visa->process_id = $itemResidence['process_id'];
                 $visa->number = $visaData['number'];
                 $visa->expedition_date = $visaData['expedition_date'];
                 $visa->expiration_date = $visaData['expiration_date'];
