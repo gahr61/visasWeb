@@ -25,10 +25,11 @@ class ScheduleController extends Controller
                         $consulado->sales_id = $client['sales_id'];
                         $consulado->clients_id = $client['clients_id'];
                         $consulado->office = 'Consulado';
-                    }                    
-                    
-                    $consulado->appointment_date = $client['consulado'];                    
+                    }
+
+                    $consulado->appointment_date = $client['consulado'];
                     $consulado->schedule = $client['consulado_time'];
+                    $consulado->city = $client['consulado_city'] ?? null;
                     $consulado->save();
                 }
 
@@ -47,6 +48,7 @@ class ScheduleController extends Controller
 
                     $consulado->appointment_date = $client['cas'];
                     $consulado->schedule = $client['cas_time'];
+                    $consulado->city = $client['cas_city'] ?? null;
                     $consulado->save();
                 }                
             }

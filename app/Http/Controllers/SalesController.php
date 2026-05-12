@@ -68,7 +68,7 @@ class SalesController extends Controller
         foreach($clients as $client){
             $client['schedule'] = \DB::table('schedule_details')
                                         ->where('clients_id', $client->clients_id)
-                                        ->select('office', 'appointment_date', 'schedule', 'status', 'observations')
+                                        ->select('office', 'appointment_date', 'schedule', 'status', 'observations', 'city')
                                         ->get();
 
         }
