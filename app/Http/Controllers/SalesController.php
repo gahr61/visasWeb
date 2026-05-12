@@ -140,36 +140,75 @@ class SalesController extends Controller
     }
 
     /** visa procedure list */
-    public function visa_list(){
-        $visas = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
+    public function visa_list(Request $request){
+        $query = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
                         ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                         ->join('sales_status', 'sales_status.sales_id', 'sales.id')
                         ->selectRaw('
                             sales.id, sales.folio, sales.date,
                             COUNT(sales_clients.id) AS no_applicants,
-                            sales_billing.names, sales_billing.lastname1, sales_billing.lastname2, sales_billing.email, sales_billing.phone,
+                            sales_billing.names, sales_billing.lastname1, sales_billing.lastname2,
+                            sales_billing.email, sales_billing.phone,
                             sales_status.status
                         ')
                         ->where('sales_status.is_last', true)
                         ->groupBy(
-                            'sales.id', 'sales.folio', 'sales.date', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2', 
+                            'sales.id', 'sales.folio', 'sales.date',
+                            'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2',
                             'sales_billing.email', 'sales_billing.phone', 'sales_status.status'
-                            )
-                        ->get();
+                        );
 
-        $list = array();
+        if($request->filled('folio'))
+            $query->where('sales.folio', 'like', '%'.$request->folio.'%');
 
-        foreach($visas as $visa){
-            $list[] = [
-                'id' => $visa->id, 'folio' => $visa->folio, 'date' => $visa->date, 'no_applicants' => $visa->no_applicants,
-                'client' => $visa->names.' '.$visa->lastname1.(is_null($visa->lastname2) ? '' : ' '.$visa->lastname2),
-                'email' => $visa->email, 'phone'=>$visa->phone, 'status' => $visa->status
+        if($request->filled('date'))
+            $query->whereRaw("DATE_FORMAT(sales.date, '%d/%m/%Y') LIKE ?", ['%'.$request->date.'%']);
+
+        if($request->filled('email'))
+            $query->where('sales_billing.email', 'like', '%'.$request->email.'%');
+
+        if($request->filled('status'))
+            $query->where('sales_status.status', $request->status);
+
+        if($request->filled('client'))
+            $query->whereRaw(
+                "CONCAT(sales_billing.names, ' ', sales_billing.lastname1, IFNULL(CONCAT(' ', sales_billing.lastname2), '')) LIKE ?",
+                ['%'.$request->client.'%']
+            );
+
+        if($request->filled('no_applicants') && is_numeric($request->no_applicants))
+            $query->havingRaw('COUNT(sales_clients.id) = ?', [(int)$request->no_applicants]);
+
+        $perPage = (int)($request->per_page ?? 25);
+        $page    = (int)($request->page ?? 1);
+
+        $countSql = "SELECT COUNT(*) as aggregate FROM ({$query->toSql()}) as subquery";
+        $total    = \DB::selectOne($countSql, $query->getBindings())->aggregate;
+
+        $visas = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+
+        $list = $visas->map(function($visa) {
+            return [
+                'id'            => $visa->id,
+                'folio'         => $visa->folio,
+                'date'          => $visa->date,
+                'no_applicants' => $visa->no_applicants,
+                'client'        => $visa->names.' '.$visa->lastname1.(is_null($visa->lastname2) ? '' : ' '.$visa->lastname2),
+                'email'         => $visa->email,
+                'phone'         => $visa->phone,
+                'status'        => $visa->status,
             ];
-        }
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $list
+            'data'    => $list,
+            'meta'    => [
+                'total'        => (int)$total,
+                'current_page' => $page,
+                'last_page'    => max(1, (int)ceil($total / $perPage)),
+                'per_page'     => $perPage,
+            ]
         ]);
     }
 
