@@ -144,12 +144,19 @@ class SalesController extends Controller
         $query = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
                         ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                         ->join('sales_status', 'sales_status.sales_id', 'sales.id')
+                        ->leftJoin('clients', 'clients.id', '=', 'sales_clients.clients_id')
+                        ->leftJoin('process as p', 'p.clients_id', '=', 'clients.id')
+                        ->leftJoin('process_details as pd', 'pd.process_id', '=', 'p.id')
+                        ->leftJoin('sales_process_account as spa', 'spa.clients_id', '=', 'clients.id')
                         ->selectRaw('
                             sales.id, sales.folio, sales.date,
-                            COUNT(sales_clients.id) AS no_applicants,
+                            COUNT(DISTINCT sales_clients.id) AS no_applicants,
                             sales_billing.names, sales_billing.lastname1, sales_billing.lastname2,
                             sales_billing.email, sales_billing.phone,
-                            sales_status.status
+                            sales_status.status,
+                            GROUP_CONCAT(DISTINCT NULLIF(pd.clave_ds_160, \'\') SEPARATOR \', \') AS ds_160,
+                            MIN(spa.email) AS account_email,
+                            MIN(spa.password) AS account_password
                         ')
                         ->where('sales_status.is_last', true)
                         ->groupBy(
@@ -176,8 +183,11 @@ class SalesController extends Controller
                 ['%'.$request->client.'%']
             );
 
+        if($request->filled('ds_160'))
+            $query->where('pd.clave_ds_160', 'like', '%'.$request->ds_160.'%');
+
         if($request->filled('no_applicants') && is_numeric($request->no_applicants))
-            $query->havingRaw('COUNT(sales_clients.id) = ?', [(int)$request->no_applicants]);
+            $query->havingRaw('COUNT(DISTINCT sales_clients.id) = ?', [(int)$request->no_applicants]);
 
         $perPage = (int)($request->per_page ?? 25);
         $page    = (int)($request->page ?? 1);
@@ -189,14 +199,17 @@ class SalesController extends Controller
 
         $list = $visas->map(function($visa) {
             return [
-                'id'            => $visa->id,
-                'folio'         => $visa->folio,
-                'date'          => $visa->date,
-                'no_applicants' => $visa->no_applicants,
-                'client'        => $visa->names.' '.$visa->lastname1.(is_null($visa->lastname2) ? '' : ' '.$visa->lastname2),
-                'email'         => $visa->email,
-                'phone'         => $visa->phone,
-                'status'        => $visa->status,
+                'id'               => $visa->id,
+                'folio'            => $visa->folio,
+                'date'             => $visa->date,
+                'no_applicants'    => $visa->no_applicants,
+                'client'           => $visa->names.' '.$visa->lastname1.(is_null($visa->lastname2) ? '' : ' '.$visa->lastname2),
+                'email'            => $visa->email,
+                'phone'            => $visa->phone,
+                'status'           => $visa->status,
+                'ds_160'           => $visa->ds_160,
+                'account_email'    => $visa->account_email,
+                'account_password' => $visa->account_password,
             ];
         });
 
