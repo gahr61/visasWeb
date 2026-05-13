@@ -19,6 +19,7 @@ use App\Models\SalesClients;
 use App\Models\SalesProcessAccount;
 use App\Models\Sales;
 use App\Models\ClientsSocialNetwork;
+use App\Models\ClientLanguages;
 
 class ProceduresController extends Controller
 {
@@ -111,6 +112,10 @@ class ProceduresController extends Controller
 
             $client['social'] = ClientsSocialNetwork::where('clients_id', $client->id)
                                             ->select('id', 'clients_id', 'network as socialNetwork', 'username', 'url')
+                                            ->get();
+
+            $client['languages'] = ClientLanguages::where('clients_id', $client->id)
+                                            ->select('id', 'language', 'percentage')
                                             ->get();
             
                     

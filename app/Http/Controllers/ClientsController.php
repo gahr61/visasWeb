@@ -20,6 +20,7 @@ use App\Models\ClientsVisaHistory;
 use App\Models\SalesProcessAccount;
 use App\Models\Passport;
 use App\Models\ClientsSocialNetwork;
+use App\Models\ClientLanguages;
 
 class ClientsController extends Controller
 {
@@ -320,6 +321,39 @@ class ClientsController extends Controller
                 'message' => 'Los datos de ocupación se registraron correctamente'
             ]);
             
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error. '.$e->getMessage().' '.$e->getLine()
+            ]);
+        }
+    }
+
+    public function clientsSaveLanguages(Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $clients_id = $request->clients_id;
+
+            ClientLanguages::where('clients_id', $clients_id)->delete();
+
+            foreach($request->languages as $item){
+                $language = new ClientLanguages();
+                $language->clients_id = $clients_id;
+                $language->language = $item['language'];
+                $language->percentage = $item['percentage'];
+                $language->save();
+            }
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Los idiomas se guardaron correctamente'
+            ]);
+
         }catch(\Exception $e){
             \DB::rollback();
 

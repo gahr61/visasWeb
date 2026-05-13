@@ -65,6 +65,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('clients/parents', 'clientsRelationships');
             Route::post('clients/occupations', 'clientsSaveUpdateOccupation');
             Route::post('clients/studies', 'clientsSaveSchools');
+            Route::post('clients/languages', 'clientsSaveLanguages');
             Route::post('clients/travel', 'clientsSaveTravel');
             Route::get('clients/autocomplete', 'clientsAutocomplete');
             Route::get('clients/data/{id}', 'clientsData');
