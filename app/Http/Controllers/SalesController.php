@@ -328,29 +328,24 @@ class SalesController extends Controller
                 'status' => 'Pagado',
                 'platform' => $payment['platform'],
                 'receipt' => $payment['receipt'],
-                'reference' => $payment['receipt'] ? $payment['receipt'] : null
+                'reference' => $payment['reference'] ? $payment['reference'] : null
             ]);
 
             /**sales billing */
             $billing = $request->billing;
 
-            SalesBilling::updateOrCreate(
-                ['email' => $billing['email']],
-                [
-                    'sales_id' => $sales->id,
-                    'email' => $billing['email'],
-                    'names' => $billing['names'],
-                    'lastname1' => $billing['lastname1'],
-                    'lastname2' => $billing['lastname2'],
-                    'phone' => $billing['phone']
-                ]
-            );
+            SalesBilling::create([
+                'sales_id' => $sales->id,
+                'email' => $billing['email'],
+                'names' => $billing['names'],
+                'lastname1' => $billing['lastname1'],
+                'lastname2' => $billing['lastname2'],
+                'phone' => $billing['phone']
+            ]);
 
 
             /** create user account  */
-            $user = User::where('names', $billing['names'])
-                            ->where('lastname1', $billing['lastname1'])
-                            ->where('lastname2', $billing['lastname2'])
+            $user = User::where('email', $billing['email'])
                             ->where('role', 'cliente')
                             ->first();
 
