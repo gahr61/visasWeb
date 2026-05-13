@@ -121,11 +121,17 @@ class ProceduresController extends Controller
                     
         }
 
+        $sale_status = \DB::table('sales_status')
+            ->where('sales_id', $id)
+            ->orderBy('id', 'desc')
+            ->value('status') ?? '';
+
         return response()->json([
             'success' => true,
             'data' => [
-                'sale_type' => $sale->type, 
-                'clients' => $clients
+                'sale_type'   => $sale->type,
+                'sale_status' => $sale_status,
+                'clients'     => $clients
             ]
         ]);
     }
