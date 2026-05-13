@@ -125,16 +125,33 @@
                                 </div>
                             </div>
 
+                            @if($data['body']['is_new_user'])
                             <div class="container flex justify-content-center" style="padding:5px">
-                                <p>Te damos la bienvenida a nuestra plataforma. A continuación te compartimos tus datos de acceso temporal.</p>
-                            </div>    
-                            
+                                <p>
+                                    Te damos la bienvenida a nuestra plataforma. A continuación te compartimos tus datos de acceso para que puedas ingresar al sistema
+                                    y completar la información de tu formulario.
+                                </p>
+                            </div>
+
                             <hr/>
 
                             <div style="display:block; padding:5px; flex-direction:column;">
                                 <p><b>Usuario: </b> {{$data['body']['user']['email']}}</p>
-                                <p><b>Contraseña: </b> @cc350.T3mp.2025</p>                                                            
+                                <p><b>Contraseña temporal: </b> @cc350.T3mp.2025</p>
                             </div>
+                            @else
+                            <div class="container flex justify-content-center" style="padding:5px">
+                                <p>
+                                    Ya cuentas con una cuenta en nuestro sistema. Ingresa con tus credenciales habituales para continuar con tu trámite.
+                                </p>
+                            </div>
+
+                            <hr/>
+
+                            <div style="display:block; padding:5px; flex-direction:column;">
+                                <p><b>Usuario: </b> {{$data['body']['user']['email']}}</p>
+                            </div>
+                            @endif
 
                             <hr/>
 

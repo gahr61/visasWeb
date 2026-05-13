@@ -82,7 +82,7 @@ class SalesController extends Controller
     }
 
     /** send procedure email to client */
-    public function sendWelcomeEmail($sales_id, $type){
+    public function sendWelcomeEmail($sales_id, $type, $is_new_user = true){
         $sale = Sales::join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                     ->select('sales.date', 'sales.folio', 'sales_billing.email', 'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2')
                     ->where('sales.id', $sales_id)
@@ -114,7 +114,8 @@ class SalesController extends Controller
             'sale' => $sale,
             'clients' => $salesClients,
             'documents' => $documents,
-            'user' => $user
+            'user' => $user,
+            'is_new_user' => $is_new_user
         ];
 
         $data = [
@@ -349,7 +350,9 @@ class SalesController extends Controller
                             ->where('role', 'cliente')
                             ->first();
 
-            if(is_null($user)){
+            $is_new_user = is_null($user);
+
+            if($is_new_user){
                 $user = new User();
                 $user->names =  $billing['names'];
                 $user->lastname1 =  $billing['lastname1'];
@@ -500,7 +503,7 @@ class SalesController extends Controller
             }
 
             /** send email */
-            //$this->sendWelcomeEmail($sales->id, 'Visa');
+            $this->sendWelcomeEmail($sales->id, 'Visa', $is_new_user);
 
             \DB::commit();
 
