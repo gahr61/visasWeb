@@ -146,7 +146,10 @@ class SalesController extends Controller
                         ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                         ->join('sales_status', 'sales_status.sales_id', 'sales.id')
                         ->leftJoin('clients', 'clients.id', '=', 'sales_clients.clients_id')
-                        ->leftJoin('process as p', 'p.clients_id', '=', 'clients.id')
+                        ->leftJoin('process as p', function($join){
+                            $join->on('p.clients_id', '=', 'clients.id')
+                                 ->where('p.type', 'Visa');
+                        })
                         ->leftJoin('process_details as pd', 'pd.process_id', '=', 'p.id')
                         ->leftJoin('sales_process_account as spa', 'spa.clients_id', '=', 'clients.id')
                         ->selectRaw('
@@ -160,6 +163,7 @@ class SalesController extends Controller
                             MIN(spa.password) AS account_password
                         ')
                         ->where('sales_status.is_last', true)
+                        ->whereNotNull('p.id')
                         ->groupBy(
                             'sales.id', 'sales.folio', 'sales.date',
                             'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2',

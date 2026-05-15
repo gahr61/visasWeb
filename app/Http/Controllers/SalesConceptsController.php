@@ -43,6 +43,15 @@ class SalesConceptsController extends Controller
         return response()->json(['success' => true, 'data' => $history]);
     }
 
+    public function passportPrices(){
+        $concepts = SalesConcepts::where('name', 'LIKE', '%Pasaporte%')
+                        ->where('is_process', true)
+                        ->select('id as value', 'name as label', 'price', 'is_process')
+                        ->get();
+
+        return response()->json(['success' => true, 'data' => $concepts]);
+    }
+
     /**
      * Store a newly created resource in storage.
      */

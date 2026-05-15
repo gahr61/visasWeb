@@ -10,6 +10,7 @@ use App\Http\Controllers\SalesConceptsController;
 use App\Http\Controllers\SalesBillingController;
 use App\Http\Controllers\CommissionsController;
 use App\Http\Controllers\PassportController;
+use App\Http\Controllers\PassportSalesController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\ProceduresController;
 use App\Http\Controllers\SalesController;
@@ -96,6 +97,15 @@ Route::group(['prefix'=>'v1'], function(){
             Route::put('passport/{id}/update', 'update');
         });
 
+        Route::controller(PassportSalesController::class)->group(function(){
+            Route::post('sales/passport', 'store');
+            Route::get('sales/passport/list', 'list');
+            Route::get('sales/passport/{id}/details', 'info');
+            Route::put('sales/passport/{id}/update', 'update');
+            Route::put('sales/passport/{id}/schedule', 'scheduleUpdate');
+            Route::delete('sales/passport/{id}/delete', 'delete');
+        });
+
         Route::controller(PermissionsController::class)->group(function(){
             Route::get('permissions', 'fullList');
             Route::get('permissions/assigned/{id}', 'permissionsAssigned');
@@ -133,6 +143,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('concepts/{id}/history', 'history');
             Route::put('concepts/{id}/update', 'update');
             Route::get('concepts/visa', 'visaPrices');
+            Route::get('concepts/passport', 'passportPrices');
         });
 
         Route::controller(ScheduleController::class)->group(function(){
