@@ -20,6 +20,7 @@ use App\Http\Controllers\OccupationsController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\WebController;
+use App\Http\Controllers\DashboardController;
 
 Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix'=>'auth'], function(){
@@ -43,6 +44,8 @@ Route::group(['prefix'=>'v1'], function(){
     Route::post('sales/clients/confirm', [SalesBillingController::class, 'visaPaymentUpdate']);    
     
     Route::group(['middleware' => 'auth:sanctum'], function(){
+        Route::get('dashboard/indicators', [DashboardController::class, 'indicators']);
+
         Route::controller(BranchOfficeController::class)->group(function(){
             Route::delete('branchOffice/{id}/delete', 'delete');
             Route::get('branchOffice/{id}/edit', 'edit');
