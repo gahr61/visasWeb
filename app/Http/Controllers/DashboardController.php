@@ -177,6 +177,61 @@ class DashboardController extends Controller
                     ->orderByDesc('count')
                     ->get();
 
+                // Ventas de visa vs pasaporte en el período (por prefijo de folio)
+                $passportSaleIds = \DB::table('sales')
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->where('folio', 'like', 'PP%')
+                    ->pluck('id')
+                    ->toArray();
+
+                $visaSaleIds = \DB::table('sales')
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->where('folio', 'like', 'PV%')
+                    ->pluck('id')
+                    ->toArray();
+
+                $data['passport_sales'] = [
+                    'count'  => count($passportSaleIds),
+                    'amount' => (float) (empty($passportSaleIds) ? 0 : \DB::table('sales')->whereIn('id', $passportSaleIds)->sum('total')),
+                ];
+
+                $data['visa_sales'] = [
+                    'count'  => count($visaSaleIds),
+                    'amount' => (float) (empty($visaSaleIds) ? 0 : \DB::table('sales')->whereIn('id', $visaSaleIds)->sum('total')),
+                ];
+
+                // Trámites de pasaporte por estado (proceso)
+                $data['passport_procedures_by_status'] = \DB::table('process_status')
+                    ->join('process', 'process.id', '=', 'process_status.process_id')
+                    ->where('process_status.is_last', true)
+                    ->where('process.type', 'Pasaporte')
+                    ->selectRaw('process_status.status, COUNT(*) as count')
+                    ->groupBy('process_status.status')
+                    ->get();
+
+                // Trámites de visa por estado (proceso)
+                $data['visa_procedures_by_status'] = \DB::table('process_status')
+                    ->join('process', 'process.id', '=', 'process_status.process_id')
+                    ->where('process_status.is_last', true)
+                    ->where('process.type', 'Visa')
+                    ->selectRaw('process_status.status, COUNT(*) as count')
+                    ->groupBy('process_status.status')
+                    ->get();
+
+                $data['passport_active_procedures'] = \DB::table('process_status')
+                    ->join('process', 'process.id', '=', 'process_status.process_id')
+                    ->where('process_status.is_last', true)
+                    ->where('process.type', 'Pasaporte')
+                    ->where('process_status.status', '!=', 'Finalizado')
+                    ->count();
+
+                $data['visa_active_procedures'] = \DB::table('process_status')
+                    ->join('process', 'process.id', '=', 'process_status.process_id')
+                    ->where('process_status.is_last', true)
+                    ->where('process.type', 'Visa')
+                    ->where('process_status.status', '!=', 'Finalizado')
+                    ->count();
+
                 // Ranking de empleados en el período (top 5)
                 $data['employees_ranking'] = \DB::table('users')
                     ->join('sales_users', 'sales_users.users_id', '=', 'users.id')
