@@ -144,6 +144,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::put('concepts/{id}/update', 'update');
             Route::get('concepts/visa', 'visaPrices');
             Route::get('concepts/passport', 'passportPrices');
+            Route::get('concepts/passport/minimum', 'passportMinimumPayment');
         });
 
         Route::controller(ScheduleController::class)->group(function(){

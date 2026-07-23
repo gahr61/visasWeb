@@ -13,7 +13,7 @@ class SalesConceptsController extends Controller
      */
     public function index()
     {
-        $catalog = SalesConcepts::select('id', 'name', 'price')->get();
+        $catalog = SalesConcepts::select('id', 'name', 'price', 'is_protected')->get();
 
         return response()->json([
             'success' => true,
@@ -50,6 +50,15 @@ class SalesConceptsController extends Controller
                         ->get();
 
         return response()->json(['success' => true, 'data' => $concepts]);
+    }
+
+    public function passportMinimumPayment(){
+        $concept = SalesConcepts::where('is_protected', true)
+                        ->where('name', 'LIKE', '%Pasaporte%')
+                        ->select('id', 'name', 'price')
+                        ->first();
+
+        return response()->json(['success' => true, 'data' => $concept]);
     }
 
     /**
@@ -93,7 +102,7 @@ class SalesConceptsController extends Controller
      */
     public function show($id)
     {
-        $catalog = SalesConcepts::select('name', 'price', 'is_process')->where('id', $id)->first();
+        $catalog = SalesConcepts::select('name', 'price', 'is_process', 'is_protected')->where('id', $id)->first();
 
         return response()->json([
             'success' => true,
@@ -110,9 +119,11 @@ class SalesConceptsController extends Controller
             \DB::beginTransaction();
 
             $concept = SalesConcepts::where('id', $id)->first();
-            $concept->name = $request->name;
+            if (!$concept->is_protected) {
+                $concept->name = $request->name;
+                $concept->is_process = $request->is_process;
+            }
             $concept->price = $request->price;
-            $concept->is_process = $request->is_process;
             $concept->save();
 
             $history = \DB::table('sales_concepts_history')
