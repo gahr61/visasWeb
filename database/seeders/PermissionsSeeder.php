@@ -276,6 +276,12 @@ class PermissionsSeeder extends Seeder
             'description'   => 'Permite ver el formulario de llenado para tramite de visa',
             'guard_name'	=> 'web'
         ]);
+        \DB::table('permissions')->insert([
+            'name'          => 'procedure_visa_view_password',
+            'display_name'  => 'Ver contraseña de cuenta DS-160',
+            'description'   => 'Permite ver la contraseña de la cuenta del portal DS-160 de un cliente',
+            'guard_name'	=> 'web'
+        ]);
 
        
     }   

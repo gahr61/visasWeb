@@ -23,6 +23,7 @@ use App\Models\SalesCommissions;
 use App\Models\SalesDetails;
 use App\Models\SalesPayment;
 use App\Models\SalesProcess;
+use App\Models\SalesProcessAccount;
 use App\Models\SalesStatus;
 use App\Models\SalesUsers;
 use App\Models\Visas;
@@ -159,8 +160,7 @@ class SalesController extends Controller
                             sales_billing.email, sales_billing.phone,
                             sales_status.status,
                             GROUP_CONCAT(DISTINCT NULLIF(pd.clave_ds_160, \'\') SEPARATOR \', \') AS ds_160,
-                            MIN(spa.email) AS account_email,
-                            MIN(spa.password) AS account_password
+                            GROUP_CONCAT(DISTINCT NULLIF(spa.email, \'\') SEPARATOR \', \') AS account_email
                         ')
                         ->where('sales_status.is_last', true)
                         ->whereNotNull('p.id')
@@ -214,7 +214,6 @@ class SalesController extends Controller
                 'status'           => $visa->status,
                 'ds_160'           => $visa->ds_160,
                 'account_email'    => $visa->account_email,
-                'account_password' => $visa->account_password,
             ];
         });
 
@@ -227,6 +226,47 @@ class SalesController extends Controller
                 'last_page'    => max(1, (int)ceil($total / $perPage)),
                 'per_page'     => $perPage,
             ]
+        ]);
+    }
+
+    /** reveals the DS-160 portal account password for a visa sale, on demand */
+    public function visaAccountPassword(Request $request, $id){
+        if(!$request->user()->can('procedure_visa_view_password')){
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para ver esta contraseña'
+            ], 403);
+        }
+
+        $clientsIds = SalesClients::where('sales_id', $id)->pluck('clients_id');
+
+        $accounts = SalesProcessAccount::join('clients', 'clients.id', '=', 'sales_process_account.clients_id')
+                        ->whereIn('sales_process_account.clients_id', $clientsIds)
+                        ->whereNotNull('sales_process_account.password')
+                        ->orderBy('clients.names')
+                        ->get([
+                            'clients.names', 'clients.lastname1', 'clients.lastname2',
+                            'sales_process_account.email', 'sales_process_account.password'
+                        ]);
+
+        if($accounts->isEmpty()){
+            return response()->json([
+                'success' => false,
+                'message' => 'No existe una cuenta registrada para este trámite'
+            ], 404);
+        }
+
+        $data = $accounts->map(function($account){
+            return [
+                'client'   => trim($account->names.' '.$account->lastname1.' '.$account->lastname2),
+                'email'    => $account->email,
+                'password' => $account->password
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
         ]);
     }
 
