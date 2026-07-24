@@ -69,7 +69,7 @@ class ProceduresController extends Controller
 
             $client['parents'] = ClientsParents::where('clients_id', $client->id)
                                         ->select(
-                                            'id', 'relationship', 'full_name', 'birthdate', 'has_visa',
+                                            'id', 'relationship', 'full_name', 'birthdate', 'has_visa', 'lives_in_usa',
                                             'country_birth_id', 'state_birth_id'
                                         )
                                         ->get();

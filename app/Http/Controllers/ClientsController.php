@@ -225,6 +225,7 @@ class ClientsController extends Controller
                 $relationship->full_name = $item['fullname'];
                 $relationship->birthdate = $item['birthdate'];
                 $relationship->has_visa = $item['has_visa'];
+                $relationship->lives_in_usa = $item['lives_in_usa'] ?? false;
                 $relationship->country_birth_id = $item['country_birth_id'] ?? null;
                 $relationship->state_birth_id = $item['state_birth_id'] ?? null;
                 $relationship->save();
