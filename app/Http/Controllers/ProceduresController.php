@@ -85,7 +85,11 @@ class ProceduresController extends Controller
                                         ->first();
             
             $client['studies'] = ClientsStudies::where('clients_id', $client->id)
-                                        ->select('id','name', 'address', 'period')
+                                        ->select(
+                                            'id', 'name', 'degree_level', 'period',
+                                            'street', 'int_number', 'ext_number', 'postal_code', 'colony', 'city',
+                                            'countries_id', 'states_id'
+                                        )
                                         ->get();
 
             $client['process_details'] = ProcessDetails::select(

@@ -324,8 +324,16 @@ class ClientsController extends Controller
                 $school = new ClientsStudies();
                 $school->clients_id = $clients_id;
                 $school->name = $item['name'];
-                $school->address = $item['address'];
+                $school->degree_level = $item['degree_level'] ?? null;
                 $school->period = $item['period'];
+                $school->street = $item['address']['street'] ?? null;
+                $school->int_number = $item['address']['int_number'] ?? null;
+                $school->ext_number = $item['address']['ext_number'] ?? null;
+                $school->postal_code = $item['address']['postal_code'] ?? null;
+                $school->colony = $item['address']['colony'] ?? null;
+                $school->city = $item['address']['city'] ?? null;
+                $school->countries_id = $item['address']['countries_id'] ?? null;
+                $school->states_id = $item['address']['states_id'] ?? null;
                 $school->save();
             }
 
