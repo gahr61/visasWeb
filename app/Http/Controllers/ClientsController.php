@@ -274,9 +274,22 @@ class ClientsController extends Controller
 
             $clientOccupation->name = $request->name;
             $clientOccupation->occupations_id = $occupations_id;
-            $clientOccupation->address = $request->address;
             $clientOccupation->salary = $request->salary;
             $clientOccupation->antiquity = $request->antiquity;
+            $clientOccupation->hire_date = $request->hire_date;
+            $clientOccupation->activities_description = $request->activities_description;
+
+            if($request->has('address')){
+                $clientOccupation->street = $request->address['street'];
+                $clientOccupation->int_number = $request->address['int_number'];
+                $clientOccupation->ext_number = $request->address['ext_number'];
+                $clientOccupation->postal_code = $request->address['postal_code'];
+                $clientOccupation->colony = $request->address['colony'];
+                $clientOccupation->city = $request->address['city'];
+                $clientOccupation->countries_id = $request->address['countries_id'];
+                $clientOccupation->states_id = $request->address['states_id'];
+            }
+
             $clientOccupation->save();
 
             \DB::commit();

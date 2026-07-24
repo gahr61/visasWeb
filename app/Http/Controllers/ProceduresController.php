@@ -76,7 +76,10 @@ class ProceduresController extends Controller
 
             $client['occupation'] = ClientsOccupation::where('clients_id', $client->id)
                                         ->select(
-                                            'id', 'occupations_id', 'name', 'address', 'salary', 'antiquity'
+                                            'id', 'occupations_id', 'name', 'salary', 'antiquity',
+                                            'hire_date', 'activities_description',
+                                            'street', 'int_number', 'ext_number', 'postal_code', 'colony', 'city',
+                                            'countries_id', 'states_id'
                                         )
                                         ->orderBy('id', 'desc')
                                         ->first();

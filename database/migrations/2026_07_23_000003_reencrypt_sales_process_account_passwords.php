@@ -6,11 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Legacy passphrase the frontend used (CryptoJS AES) to pre-encrypt this
-     * column before saving. Needed once to recover the real value for rows
-     * saved before password encryption moved server-side.
-     */
+    // Old CryptoJS passphrase the frontend used to pre-encrypt this column.
     private string $legacyFrontendSecret = 'm4~3R3/7I5sU1d=*p5V0';
 
     public function up(): void
