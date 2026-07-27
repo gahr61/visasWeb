@@ -22,6 +22,7 @@ use App\Models\Passport;
 use App\Models\ClientsSocialNetwork;
 use App\Models\ClientLanguages;
 use App\Models\RelationshipType;
+use App\Models\Process;
 
 class ClientsController extends Controller
 {
@@ -523,6 +524,12 @@ class ClientsController extends Controller
                 $social->username = $item['username'];
                 $social->email = $item['email'];
                 $social->save();
+            }
+
+            if($request->has('mark_complete')){
+                Process::where('id', $itemResidence['process_id'])->update([
+                    'complete' => (bool) $request->mark_complete
+                ]);
             }
 
             \DB::commit();
