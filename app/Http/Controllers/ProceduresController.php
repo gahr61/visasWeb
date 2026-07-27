@@ -93,7 +93,8 @@ class ProceduresController extends Controller
                                         ->get();
 
             $client['process_details'] = ProcessDetails::select(
-                                                    'id', 'travel_date', 'address_eeuu', 'travel_date_eeuu',
+                                                    'id', 'travel_date', 'travel_date_eeuu',
+                                                    'street_eeuu', 'number_eeuu', 'city_eeuu', 'state_eeuu', 'zip_eeuu',
                                                     'time_stay_eeuu', 'travel_reason', 'cover_expenses', 'has_visit_eeuu',
                                                     'date_visit_eeuu', 'time_visit_eeuu', 'clave_ds_160', 'visa_approved',
                                                     'travel_before', 'travel_before_countries', 'travel_countries', 'observations'
@@ -113,13 +114,13 @@ class ProceduresController extends Controller
 
             $client['residence'] = Residence::where('process_id', $process_id)
                                             ->select(
-                                                'id', 'full_name', 'cel_phone', 'work_phone', 'personal_phone'
+                                                'id', 'full_name', 'relationship', 'cel_phone', 'work_phone', 'personal_phone'
                                             )
                                             ->orderBy('id', 'desc')
                                             ->first();
 
             $client['social'] = ClientsSocialNetwork::where('clients_id', $client->id)
-                                            ->select('id', 'clients_id', 'network as socialNetwork', 'username', 'url')
+                                            ->select('id', 'clients_id', 'network as socialNetwork', 'username', 'email')
                                             ->get();
 
             $client['languages'] = ClientLanguages::where('clients_id', $client->id)

@@ -21,6 +21,7 @@ use App\Models\SalesProcessAccount;
 use App\Models\Passport;
 use App\Models\ClientsSocialNetwork;
 use App\Models\ClientLanguages;
+use App\Models\RelationshipType;
 
 class ClientsController extends Controller
 {
@@ -219,6 +220,8 @@ class ClientsController extends Controller
             ClientsParents::where('clients_id', $id)->delete();
 
             foreach($request->relationships as $item){
+                RelationshipType::firstOrCreate(['name' => $item['relationship']]);
+
                 $relationship = new ClientsParents();
                 $relationship->clients_id = $id;
                 $relationship->relationship = $item['relationship'];
@@ -405,8 +408,13 @@ class ClientsController extends Controller
                 $residence = new Residence();
             }
             
+            if(!empty($itemResidence['relationship'])){
+                RelationshipType::firstOrCreate(['name' => $itemResidence['relationship']]);
+            }
+
             $residence->process_id = $itemResidence['process_id'];
             $residence->full_name = $itemResidence['full_name'];
+            $residence->relationship = $itemResidence['relationship'] ?? null;
             $residence->cel_phone = $itemResidence['cel_phone'];
             $residence->work_phone = $itemResidence['work_phone'];
             $residence->personal_phone = $itemResidence['personal_phone'];
@@ -424,7 +432,11 @@ class ClientsController extends Controller
 
             $processDetails->process_id = $itemResidence['process_id'];
             $processDetails->travel_date = $process['travel_date'] ?? $process['travel_date_eeuu'];
-            $processDetails->address_eeuu = $process['address_eeuu'];
+            $processDetails->street_eeuu = $process['address_eeuu']['street'] ?? null;
+            $processDetails->number_eeuu = $process['address_eeuu']['number'] ?? null;
+            $processDetails->city_eeuu = $process['address_eeuu']['city'] ?? null;
+            $processDetails->state_eeuu = $process['address_eeuu']['state'] ?? null;
+            $processDetails->zip_eeuu = $process['address_eeuu']['zip'] ?? null;
             $processDetails->travel_date_eeuu = $process['travel_date_eeuu'];
             $processDetails->time_stay_eeuu = $process['time_stay_eeuu'];
             $processDetails->travel_reason = $process['travel_reason'];
@@ -507,7 +519,7 @@ class ClientsController extends Controller
                 $social->clients_id = $item['clients_id'];
                 $social->network = $item['socialNetwork'];
                 $social->username = $item['username'];
-                $social->url = $item['url'];
+                $social->email = $item['email'];
                 $social->save();
             }
 

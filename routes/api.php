@@ -18,6 +18,7 @@ use App\Http\Controllers\SalesTokenController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\OccupationsController;
+use App\Http\Controllers\RelationshipTypesController;
 use App\Http\Controllers\ProcessController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\WebController;
@@ -91,6 +92,10 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('occupations', 'store');
             Route::put('occupations/{id}/update', 'update');
             Route::delete('occupations/{id}/delete', 'destroy');
+        });
+
+        Route::controller(RelationshipTypesController::class)->group(function(){
+            Route::get('relationship_types/list', 'list');
         });
 
         Route::controller(PassportController::class)->group(function(){
