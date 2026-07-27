@@ -20,11 +20,12 @@ use App\Models\SalesProcessAccount;
 use App\Models\Sales;
 use App\Models\ClientsSocialNetwork;
 use App\Models\ClientLanguages;
+use App\Models\ScheduleDetails;
 
 class ProceduresController extends Controller
 {
     public function infoVisasDetails($id){
-        $sale = Sales::select('type')->where('id', $id)->first();
+        $sale = Sales::select('type', 'folio')->where('id', $id)->first();
 
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')                                                
                         ->select(
@@ -123,6 +124,18 @@ class ProceduresController extends Controller
                                             ->select('id', 'clients_id', 'network as socialNetwork', 'username', 'email')
                                             ->get();
 
+            $client['cas'] = ScheduleDetails::where('clients_id', $client->id)
+                                            ->where('office', 'CAS')
+                                            ->select('appointment_date', 'schedule', 'city')
+                                            ->orderBy('id', 'desc')
+                                            ->first();
+
+            $client['consulado'] = ScheduleDetails::where('clients_id', $client->id)
+                                            ->where('office', 'Consulado')
+                                            ->select('appointment_date', 'schedule', 'city')
+                                            ->orderBy('id', 'desc')
+                                            ->first();
+
             $client['languages'] = ClientLanguages::where('clients_id', $client->id)
                                             ->select('id', 'language', 'percentage')
                                             ->get();
@@ -139,6 +152,7 @@ class ProceduresController extends Controller
             'success' => true,
             'data' => [
                 'sale_type'   => $sale->type,
+                'sale_folio'  => $sale->folio,
                 'sale_status' => $sale_status,
                 'clients'     => $clients
             ]
