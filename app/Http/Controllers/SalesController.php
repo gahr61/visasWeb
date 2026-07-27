@@ -503,6 +503,8 @@ class SalesController extends Controller
                 $passport->expedition_date = $item['passport']['expedition_date'];
                 $passport->expiration_date = $item['passport']['expiration_date'];
                 $passport->expedition_countries_id = $item['passport']['country_expedition'];
+                $passport->expedition_states_id = $item['passport']['state_expedition'] ?? null;
+                $passport->expedition_city = $item['passport']['city_expedition'] ?? null;
                 $passport->save();
 
                 /** client passport history */
