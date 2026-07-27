@@ -329,6 +329,7 @@ class ClientsController extends Controller
                 $school->clients_id = $clients_id;
                 $school->name = $item['name'];
                 $school->degree_level = $item['degree_level'] ?? null;
+                $school->is_last_degree = $item['is_last_degree'] ?? false;
                 $school->period = $item['period'];
                 $school->street = $item['address']['street'] ?? null;
                 $school->int_number = $item['address']['int_number'] ?? null;
@@ -415,6 +416,7 @@ class ClientsController extends Controller
             $residence->process_id = $itemResidence['process_id'];
             $residence->full_name = $itemResidence['full_name'];
             $residence->relationship = $itemResidence['relationship'] ?? null;
+            $residence->citizen_status = $itemResidence['citizen_status'] ?? null;
             $residence->cel_phone = $itemResidence['cel_phone'];
             $residence->work_phone = $itemResidence['work_phone'];
             $residence->personal_phone = $itemResidence['personal_phone'];

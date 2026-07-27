@@ -86,7 +86,7 @@ class ProceduresController extends Controller
             
             $client['studies'] = ClientsStudies::where('clients_id', $client->id)
                                         ->select(
-                                            'id', 'name', 'degree_level', 'period',
+                                            'id', 'name', 'degree_level', 'is_last_degree', 'period',
                                             'street', 'int_number', 'ext_number', 'postal_code', 'colony', 'city',
                                             'countries_id', 'states_id'
                                         )
@@ -114,7 +114,7 @@ class ProceduresController extends Controller
 
             $client['residence'] = Residence::where('process_id', $process_id)
                                             ->select(
-                                                'id', 'full_name', 'relationship', 'cel_phone', 'work_phone', 'personal_phone'
+                                                'id', 'full_name', 'relationship', 'citizen_status', 'cel_phone', 'work_phone', 'personal_phone'
                                             )
                                             ->orderBy('id', 'desc')
                                             ->first();
