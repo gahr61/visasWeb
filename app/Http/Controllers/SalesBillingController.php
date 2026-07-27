@@ -251,6 +251,7 @@ class SalesBillingController extends Controller
             $payment->platform = 'Sistema';
             $payment->receipt = $request->receipt;
             $payment->reference = $request->reference;
+            $payment->observations = $request->observations;
             $payment->save();
 
             \DB::commit();

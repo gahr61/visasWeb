@@ -151,6 +151,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('concepts/visa', 'visaPrices');
             Route::get('concepts/passport', 'passportPrices');
             Route::get('concepts/passport/minimum', 'passportMinimumPayment');
+            Route::get('concepts/visa/minimum', 'visaMinimumPayment');
         });
 
         Route::controller(ScheduleController::class)->group(function(){

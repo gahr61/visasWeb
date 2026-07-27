@@ -14,6 +14,7 @@ class SalesPayment extends Model
         'status',
         'platform',
         'receipt',
-        'reference'
+        'reference',
+        'observations'
     ];
 }

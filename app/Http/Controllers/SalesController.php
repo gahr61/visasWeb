@@ -373,7 +373,8 @@ class SalesController extends Controller
                 'status' => 'Pagado',
                 'platform' => $payment['platform'],
                 'receipt' => $payment['receipt'],
-                'reference' => $payment['reference'] ? $payment['reference'] : null
+                'reference' => $payment['reference'] ? $payment['reference'] : null,
+                'observations' => $payment['observations'] ?? null
             ]);
 
             /**sales billing */

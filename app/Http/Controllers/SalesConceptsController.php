@@ -61,6 +61,15 @@ class SalesConceptsController extends Controller
         return response()->json(['success' => true, 'data' => $concept]);
     }
 
+    public function visaMinimumPayment(){
+        $concept = SalesConcepts::where('is_protected', true)
+                        ->where('name', 'LIKE', '%visa%')
+                        ->select('id', 'name', 'price')
+                        ->first();
+
+        return response()->json(['success' => true, 'data' => $concept]);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -73,6 +82,7 @@ class SalesConceptsController extends Controller
             $concept->name = $request->name;
             $concept->price = $request->price;
             $concept->is_process = $request->is_process;
+            $concept->is_protected = $request->boolean('is_protected');
             $concept->save();
 
             \DB::table('sales_concepts_history')->insert([
@@ -124,6 +134,7 @@ class SalesConceptsController extends Controller
                 $concept->is_process = $request->is_process;
             }
             $concept->price = $request->price;
+            $concept->is_protected = $request->boolean('is_protected');
             $concept->save();
 
             $history = \DB::table('sales_concepts_history')
