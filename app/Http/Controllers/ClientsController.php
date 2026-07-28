@@ -253,49 +253,53 @@ class ClientsController extends Controller
     }
 
     /**
-     * update or save clients occupation
+     * save clients occupations (list, one may be flagged as primary)
      */
     public function clientsSaveUpdateOccupation(Request $request){
         try{
             \DB::beginTransaction();
 
-            $occupations_id = $request->occupations_id;
+            $clients_id = $request->clients_id;
+            $occupations = $request->occupations ?? [];
 
-            if($request->otherOccupation != ''){
-                $occupation = new Occupations();
-                $occupation->name = $request->otherOccupation;
-                $occupation->save();
+            ClientsOccupation::where('clients_id', $clients_id)->delete();
 
-                $occupations_id = $occupation->id;
-            }
+            $primaryIndex = collect($occupations)->search(fn($item) => !empty($item['is_primary']));
 
+            foreach($occupations as $index => $item){
+                $occupations_id = $item['occupations_id'] ?? null;
 
-            $clientOccupation = ClientsOccupation::where('clients_id', $request->clients_id)->first();
+                if(!empty($item['otherOccupation'])){
+                    $occupation = new Occupations();
+                    $occupation->name = $item['otherOccupation'];
+                    $occupation->save();
 
-            if(!isset($clientOccupation)){
+                    $occupations_id = $occupation->id;
+                }
+
                 $clientOccupation = new ClientsOccupation();
-                $clientOccupation->clients_id = $request->clients_id;
+                $clientOccupation->clients_id = $clients_id;
+                $clientOccupation->name = $item['name'] ?? null;
+                $clientOccupation->occupations_id = $occupations_id;
+                $clientOccupation->is_primary = $primaryIndex !== false ? $index === $primaryIndex : $index === 0;
+                $clientOccupation->salary = $item['salary'] ?? null;
+                $clientOccupation->antiquity = $item['antiquity'] ?? null;
+                $clientOccupation->hire_date = $item['hire_date'] ?? null;
+                $clientOccupation->activities_description = $item['activities_description'] ?? null;
+
+                if(isset($item['address'])){
+                    $clientOccupation->street = $item['address']['street'] ?? null;
+                    $clientOccupation->int_number = $item['address']['int_number'] ?? null;
+                    $clientOccupation->ext_number = $item['address']['ext_number'] ?? null;
+                    $clientOccupation->postal_code = $item['address']['postal_code'] ?? null;
+                    $clientOccupation->colony = $item['address']['colony'] ?? null;
+                    $clientOccupation->city = $item['address']['city'] ?? null;
+                    $clientOccupation->countries_id = $item['address']['countries_id'] ?? null;
+                    $clientOccupation->states_id = $item['address']['states_id'] ?? null;
+                }
+
+                $clientOccupation->save();
             }
-
-            $clientOccupation->name = $request->name;
-            $clientOccupation->occupations_id = $occupations_id;
-            $clientOccupation->salary = $request->salary;
-            $clientOccupation->antiquity = $request->antiquity;
-            $clientOccupation->hire_date = $request->hire_date;
-            $clientOccupation->activities_description = $request->activities_description;
-
-            if($request->has('address')){
-                $clientOccupation->street = $request->address['street'];
-                $clientOccupation->int_number = $request->address['int_number'];
-                $clientOccupation->ext_number = $request->address['ext_number'];
-                $clientOccupation->postal_code = $request->address['postal_code'];
-                $clientOccupation->colony = $request->address['colony'];
-                $clientOccupation->city = $request->address['city'];
-                $clientOccupation->countries_id = $request->address['countries_id'];
-                $clientOccupation->states_id = $request->address['states_id'];
-            }
-
-            $clientOccupation->save();
 
             \DB::commit();
 
@@ -303,7 +307,7 @@ class ClientsController extends Controller
                 'success' => true,
                 'message' => 'Los datos de ocupación se registraron correctamente'
             ]);
-            
+
         }catch(\Exception $e){
             \DB::rollback();
 

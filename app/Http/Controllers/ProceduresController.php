@@ -75,15 +75,15 @@ class ProceduresController extends Controller
                                         )
                                         ->get();
 
-            $client['occupation'] = ClientsOccupation::where('clients_id', $client->id)
+            $client['occupations'] = ClientsOccupation::where('clients_id', $client->id)
                                         ->select(
-                                            'id', 'occupations_id', 'name', 'salary', 'antiquity',
+                                            'id', 'occupations_id', 'name', 'is_primary', 'salary', 'antiquity',
                                             'hire_date', 'activities_description',
                                             'street', 'int_number', 'ext_number', 'postal_code', 'colony', 'city',
                                             'countries_id', 'states_id'
                                         )
                                         ->orderBy('id', 'desc')
-                                        ->first();
+                                        ->get();
             
             $client['studies'] = ClientsStudies::where('clients_id', $client->id)
                                         ->select(
