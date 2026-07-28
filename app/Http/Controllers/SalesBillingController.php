@@ -9,6 +9,7 @@ use App\Models\SalesClients;
 use App\Models\SalesStatus;
 use App\Models\SalesVisasPayment;
 use App\Models\SalesPayment;
+use App\Models\SalesConfirmToken;
 
 class SalesBillingController extends Controller
 {
@@ -165,10 +166,27 @@ class SalesBillingController extends Controller
             \DB::beginTransaction();
 
             $salesPayment = $request->salesPayment;
+
+            $storedToken = SalesConfirmToken::where('token', $request->token)->first();
+
+            if(!$storedToken || now()->greaterThan($storedToken->expires_at)){
+                \DB::rollback();
+
+                return response()->json(['success' => false, 'message' => 'Token no válido o expirado'], 400);
+            }
+
+            foreach($salesPayment as $item){
+                if((int)$item['sales_id'] !== (int)$storedToken->sales_id){
+                    \DB::rollback();
+
+                    return response()->json(['success' => false, 'message' => 'Token no válido o expirado'], 400);
+                }
+            }
+
             $sales_id = '';
 
             foreach($salesPayment as $item){
-                
+
                 $sales_id = $item['sales_id'];
 
                 if(isset($item['files'])){
