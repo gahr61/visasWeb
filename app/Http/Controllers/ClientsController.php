@@ -417,17 +417,17 @@ class ClientsController extends Controller
             $residence->process_id = $itemResidence['process_id'];
             $residence->full_name = $itemResidence['full_name'];
             $residence->relationship = $itemResidence['relationship'] ?? null;
-            $residence->citizen_status = $itemResidence['citizen_status'] ?? null;
+            $residence->citizen_status = ($itemResidence['citizen_status'] ?? null) ?: null;
             $residence->cel_phone = $itemResidence['cel_phone'];
-            $residence->work_phone = $itemResidence['work_phone'];
-            $residence->personal_phone = $itemResidence['personal_phone'];
+            $residence->work_phone = $itemResidence['work_phone'] ?? null;
+            $residence->personal_phone = $itemResidence['personal_phone'] ?? null;
             $residence->save();
 
 
             //save process details
             $process =$request->process_details;
 
-            $processDetails = ProcessDetails::find($process['id']);
+            $processDetails = ProcessDetails::find($process['id'] ?? null);
 
             if(!isset($processDetails)){
                 $processDetails = new ProcessDetails();
@@ -438,20 +438,19 @@ class ClientsController extends Controller
             $processDetails->street_eeuu = $process['address_eeuu']['street'] ?? null;
             $processDetails->number_eeuu = $process['address_eeuu']['number'] ?? null;
             $processDetails->city_eeuu = $process['address_eeuu']['city'] ?? null;
-            $processDetails->state_eeuu = $process['address_eeuu']['state'] ?? null;
+            $processDetails->state_eeuu = ($process['address_eeuu']['state'] ?? null) ?: null;
             $processDetails->zip_eeuu = $process['address_eeuu']['zip'] ?? null;
-            $processDetails->travel_date_eeuu = $process['travel_date_eeuu'];
-            $processDetails->time_stay_eeuu = $process['time_stay_eeuu'];
-            $processDetails->travel_reason = $process['travel_reason'];
-            $processDetails->cover_expenses = $process['cover_expenses'];
-            $processDetails->has_visit_eeuu = $process['has_visit_eeuu'];
-            $processDetails->date_visit_eeuu = $process['date_visit_eeuu'];
-            $processDetails->time_visit_eeuu = $process['time_visit_eeuu'];
-            $processDetails->travel_before = $process['travel_before'];
-            $processDetails->travel_before_countries = $process['travel_before_countries'];
-            $processDetails->visa_approved = $process['visa_approved'];
-            $processDetails->travel_before_countries = $process['travel_before_countries'];
-            $processDetails->travel_countries = $process['travel_countries'];
+            $processDetails->travel_date_eeuu = $process['travel_date_eeuu'] ?? null;
+            $processDetails->time_stay_eeuu = $process['time_stay_eeuu'] ?? null;
+            $processDetails->travel_reason = $process['travel_reason'] ?? null;
+            $processDetails->cover_expenses = $process['cover_expenses'] ?? null;
+            $processDetails->has_visit_eeuu = (bool) ($process['has_visit_eeuu'] ?? false);
+            $processDetails->date_visit_eeuu = ($process['date_visit_eeuu'] ?? null) ?: null;
+            $processDetails->time_visit_eeuu = $process['time_visit_eeuu'] ?? null;
+            $processDetails->travel_before = (bool) ($process['travel_before'] ?? false);
+            $processDetails->travel_before_countries = $process['travel_before_countries'] ?? null;
+            $processDetails->visa_approved = (bool) ($process['visa_approved'] ?? false);
+            $processDetails->travel_countries = $process['travel_countries'] ?? null;
             $processDetails->save();
 
             /**
@@ -468,8 +467,8 @@ class ClientsController extends Controller
             }
 
             $processHistory->process_id = $itemResidence['process_id'];
-            $processHistory->has_tried_visa = $history['has_tried_visa'];
-            $processHistory->date = $history['date'];
+            $processHistory->has_tried_visa = (bool) ($history['has_tried_visa'] ?? false);
+            $processHistory->date = ($history['date'] ?? null) ?: null;
             $processHistory->observations = $history['observations'] ?? "";
             $processHistory->save();
 
