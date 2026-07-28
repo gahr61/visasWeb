@@ -238,6 +238,29 @@ class SalesController extends Controller
         ]);
     }
 
+    public function visa_delete($id){
+        try {
+            \DB::beginTransaction();
+
+            $sale = Sales::findOrFail($id);
+            $sale->delete();
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'El registro se eliminó correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() . ' ' . $e->getLine()
+            ]);
+        }
+    }
+
     /** reveals the DS-160 portal account password for a visa sale, on demand */
     public function visaAccountPassword(Request $request, $id){
         if(!$request->user()->can('procedure_visa_view_password')){
