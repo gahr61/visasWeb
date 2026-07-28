@@ -285,7 +285,16 @@ class UsersController extends Controller
             $user_id = auth()->user()->id;
             $changeRequired = false;
 
-            if(!is_null($request->users_id)){
+            if(!is_null($request->users_id) && (int)$request->users_id !== $user_id){
+                if(!$request->user()->can('config_system_users_change_password')){
+                    \DB::rollback();
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No tiene permiso para actualizar la contraseña de otro usuario'
+                    ], 403);
+                }
+
                 $user_id = $request->users_id;
                 $changeRequired = true;
             }
