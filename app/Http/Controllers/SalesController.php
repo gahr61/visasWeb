@@ -170,6 +170,15 @@ class SalesController extends Controller
                             'sales_billing.email', 'sales_billing.phone', 'sales_status.status'
                         );
 
+        if($request->user()->role === 'ventas'){
+            $query->whereExists(function($sub){
+                $sub->selectRaw('1')
+                    ->from('sales_users')
+                    ->whereColumn('sales_users.sales_id', 'sales.id')
+                    ->where('sales_users.users_id', \Auth::id());
+            });
+        }
+
         if($request->filled('folio'))
             $query->where('sales.folio', 'like', '%'.$request->folio.'%');
 

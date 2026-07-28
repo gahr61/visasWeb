@@ -11,7 +11,10 @@ class DashboardController extends Controller
     {
         try {
             $user       = \Auth::user();
-            $isVendedor = $user->role === 'vendedor';
+            $isVentas       = $user->role === 'ventas';
+            $isVolanteo     = $user->role === 'volanteo';
+            $isSystemAdmin  = $user->role === 'administrador_de_sistema';
+            $isFullView     = !$isVentas && !$isVolanteo;
 
             $now       = Carbon::now();
             $startDate = $request->input('start_date', $now->copy()->startOfMonth()->toDateString());
@@ -67,6 +70,11 @@ class DashboardController extends Controller
                     ->selectRaw('status, COUNT(*) as count')
                     ->groupBy('status')
                     ->get(),
+                'by_type'   => empty($myProcessIds) ? [] : \DB::table('process')
+                    ->whereIn('id', $myProcessIds)
+                    ->selectRaw('type, COUNT(*) as count')
+                    ->groupBy('type')
+                    ->get(),
             ];
 
             // ── Mis citas próximas (siempre los próximos 7 días) ─────
@@ -76,15 +84,6 @@ class DashboardController extends Controller
                     ->where('status', 'Activo')
                     ->whereBetween('appointment_date', [$today, $next7Days])
                     ->count();
-
-            // ── Mis clientes nuevos en el período ────────────────────
-            $data['my_new_clients'] = \DB::table('sales_clients')
-                ->join('sales', 'sales.id', '=', 'sales_clients.sales_id')
-                ->join('sales_users', 'sales_users.sales_id', '=', 'sales_clients.sales_id')
-                ->where('sales_users.users_id', $user->id)
-                ->whereBetween('sales.date', [$startDate, $endDate])
-                ->distinct('sales_clients.clients_id')
-                ->count('sales_clients.clients_id');
 
             // ── Mis comisiones en el período ─────────────────────────
             $data['my_commissions'] = [
@@ -100,17 +99,81 @@ class DashboardController extends Controller
                     ->sum('sales_commissions.amount'),
             ];
 
-            // ── Mis ventas por sucursal ───────────────────────────────
-            $data['my_sales_by_branch'] = empty($mySalesIds) ? [] : \DB::table('sales')
-                ->join('branch_office', 'branch_office.id', '=', 'sales.branch_offices_id')
-                ->whereIn('sales.id', $mySalesIds)
-                ->selectRaw('branch_office.name, COUNT(sales.id) as count, SUM(sales.total) as amount')
-                ->groupBy('branch_office.id', 'branch_office.name')
-                ->orderByDesc('count')
-                ->get();
+            // ── Indicadores exclusivos de Volanteo ───────────────────
+            if ($isVolanteo) {
+                $myFlyerSaleIds = \DB::table('sales_commissions')
+                    ->join('sales', 'sales.id', '=', 'sales_commissions.sales_id')
+                    ->where('sales_commissions.users_id', $user->id)
+                    ->where('sales_commissions.concept', 'Volanteo')
+                    ->whereBetween('sales.date', [$startDate, $endDate])
+                    ->pluck('sales.id')
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+                $data['my_flyer_sales'] = [
+                    'count'  => count($myFlyerSaleIds),
+                    'amount' => (float) (empty($myFlyerSaleIds)
+                        ? 0
+                        : \DB::table('sales')->whereIn('id', $myFlyerSaleIds)->sum('total')),
+                ];
+
+                $data['my_flyer_commissions'] = [
+                    'count'  => \DB::table('sales_commissions')
+                        ->join('sales', 'sales.id', '=', 'sales_commissions.sales_id')
+                        ->where('sales_commissions.users_id', $user->id)
+                        ->where('sales_commissions.concept', 'Volanteo')
+                        ->whereBetween('sales.date', [$startDate, $endDate])
+                        ->count(),
+                    'amount' => (float) \DB::table('sales_commissions')
+                        ->join('sales', 'sales.id', '=', 'sales_commissions.sales_id')
+                        ->where('sales_commissions.users_id', $user->id)
+                        ->where('sales_commissions.concept', 'Volanteo')
+                        ->whereBetween('sales.date', [$startDate, $endDate])
+                        ->sum('sales_commissions.amount'),
+                ];
+
+                $data['my_flyer_clients'] = empty($myFlyerSaleIds) ? 0 : \DB::table('sales_clients')
+                    ->whereIn('sales_id', $myFlyerSaleIds)
+                    ->distinct('clients_id')
+                    ->count('clients_id');
+            }
+
+            // ── Ranking de vendedores (Ventas y admin, no Volanteo) ───
+            if (!$isVolanteo) {
+                $data['employees_ranking'] = \DB::table('users')
+                    ->join('sales_users', 'sales_users.users_id', '=', 'users.id')
+                    ->join('sales', 'sales.id', '=', 'sales_users.sales_id')
+                    ->where('users.role', '!=', 'cliente')
+                    ->whereBetween('sales.date', [$startDate, $endDate])
+                    ->selectRaw("users.id, CONCAT(users.names, ' ', users.lastname1) as name, COUNT(DISTINCT sales.id) as sales_count")
+                    ->groupBy('users.id', 'users.names', 'users.lastname1')
+                    ->orderByDesc('sales_count')
+                    ->limit(5)
+                    ->get();
+
+                if ($isVentas) {
+                    $ranked = \DB::table('users')
+                        ->join('sales_users', 'sales_users.users_id', '=', 'users.id')
+                        ->join('sales', 'sales.id', '=', 'sales_users.sales_id')
+                        ->where('users.role', '!=', 'cliente')
+                        ->whereBetween('sales.date', [$startDate, $endDate])
+                        ->selectRaw('users.id, COUNT(DISTINCT sales.id) as sales_count')
+                        ->groupBy('users.id')
+                        ->orderByDesc('sales_count')
+                        ->get();
+
+                    $position = $ranked->search(fn($row) => $row->id === $user->id);
+
+                    $data['my_rank'] = [
+                        'position' => $position === false ? null : $position + 1,
+                        'total'    => $ranked->count(),
+                    ];
+                }
+            }
 
             // ── Indicadores solo para admin / gerencia ───────────────
-            if (!$isVendedor) {
+            if ($isFullView) {
                 // Ventas globales en el período
                 $data['total_sales'] = [
                     'count'  => \DB::table('sales')
@@ -232,18 +295,6 @@ class DashboardController extends Controller
                     ->where('process_status.status', '!=', 'Finalizado')
                     ->count();
 
-                // Ranking de empleados en el período (top 5)
-                $data['employees_ranking'] = \DB::table('users')
-                    ->join('sales_users', 'sales_users.users_id', '=', 'users.id')
-                    ->join('sales', 'sales.id', '=', 'sales_users.sales_id')
-                    ->where('users.role', '!=', 'cliente')
-                    ->whereBetween('sales.date', [$startDate, $endDate])
-                    ->selectRaw("users.id, CONCAT(users.names, ' ', users.lastname1) as name, COUNT(DISTINCT sales.id) as sales_count")
-                    ->groupBy('users.id', 'users.names', 'users.lastname1')
-                    ->orderByDesc('sales_count')
-                    ->limit(5)
-                    ->get();
-
                 // Empleados activos (sin filtro de fecha)
                 $data['active_employees'] = \DB::table('users')
                     ->where('role', '!=', 'cliente')
@@ -264,6 +315,22 @@ class DashboardController extends Controller
                     ->where('status', 'Activo')
                     ->whereBetween('appointment_date', [$today, $next7Days])
                     ->count();
+            }
+
+            // ── Bloque técnico exclusivo de Administrador de sistema ─
+            if ($isSystemAdmin) {
+                $data['roles_count']       = \DB::table('roles')->count();
+                $data['permissions_count'] = \DB::table('permissions')->count();
+
+                $data['employees_by_role'] = \DB::table('users')
+                    ->join('roles', 'roles.name', '=', 'users.role')
+                    ->where('users.role', '!=', 'cliente')
+                    ->selectRaw('roles.display_name as role, COUNT(*) as count')
+                    ->groupBy('roles.display_name')
+                    ->orderByDesc('count')
+                    ->get();
+
+                $data['pending_email_verifications'] = \DB::table('verification_tokens')->count();
             }
 
             return response()->json([
