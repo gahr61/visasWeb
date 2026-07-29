@@ -558,7 +558,7 @@ class PassportSalesController extends Controller
                 $schedule->appointment_date = $item['appointment_date'];
                 $schedule->schedule         = $item['schedule']        ?? null;
                 $schedule->city             = $item['city']            ?? null;
-                $schedule->status           = $item['status']          ?? null;
+                $schedule->status           = ($item['status'] ?? null) ?: 'Activo';
                 $schedule->observations     = $item['observations']    ?? null;
                 $schedule->save();
             }
@@ -594,7 +594,10 @@ class PassportSalesController extends Controller
                                         $join->on('process.clients_id', '=', 'clients.id')
                                              ->where('process.type', 'Pasaporte');
                                     })
-                                    ->select('clients.names', 'clients.lastname1', 'clients.lastname2', 'process.subtype', 'process.age_type')
+                                    ->select(
+                                        'clients.names', 'clients.lastname1', 'clients.lastname2',
+                                        'process.type', 'process.subtype', 'process.age_type', 'process.option_type', 'process.visa_type'
+                                    )
                                     ->where('sales_clients.sales_id', $sales_id)
                                     ->get();
 
