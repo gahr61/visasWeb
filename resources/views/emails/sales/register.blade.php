@@ -175,7 +175,7 @@
                                                             $c['age_type'].' - '.
                                                             ($c['visa_type'] != null ? $c['visa_type'].' - ' : '').                            
                                                             $c['subtype'].
-                                                            (($c['option_type'] != null && $c['option_type'] != '') ? ' - '.$data['cuerpo']['option_type'] : '')
+                                                            (($c['option_type'] != null && $c['option_type'] != '') ? ' - '.$c['option_type'] : '')
                                                         }}
                                                     </span>
                                                 </div>
