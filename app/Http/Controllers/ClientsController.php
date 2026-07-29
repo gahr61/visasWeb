@@ -189,6 +189,7 @@ class ClientsController extends Controller
                 $phone->clients_id =  $request->clients_id;
                 $phone->type = $item['type'];
                 $phone->number = $item['number'];
+                $phone->description = $item['description'] ?? null;
                 $phone->save();
             }
 

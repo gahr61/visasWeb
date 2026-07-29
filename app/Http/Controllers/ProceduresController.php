@@ -65,7 +65,7 @@ class ProceduresController extends Controller
                                         ->first();
                                         
             $client['phones'] = ClientsPhones::where('clients_id', $client->id)
-                                        ->select('id', 'type', 'number')
+                                        ->select('id', 'type', 'number', 'description')
                                         ->get();
 
             $client['parents'] = ClientsParents::where('clients_id', $client->id)
