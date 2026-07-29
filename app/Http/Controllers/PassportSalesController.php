@@ -29,6 +29,8 @@ use App\Models\User;
 
 class PassportSalesController extends Controller
 {
+    const FALLBACK_EMAIL = 'tramites@visas-premier.com';
+
     /**
      * Passport sales list with filters and pagination
      */
@@ -102,7 +104,7 @@ class PassportSalesController extends Controller
                 'type'          => $item->type,
                 'no_applicants' => $item->no_applicants,
                 'client'        => $item->names . ' ' . $item->lastname1 . (is_null($item->lastname2) ? '' : ' ' . $item->lastname2),
-                'email'         => $item->email,
+                'email'         => $item->email === self::FALLBACK_EMAIL ? null : $item->email,
                 'phone'         => $item->phone,
                 'status'        => $item->status,
             ];
@@ -188,6 +190,10 @@ class PassportSalesController extends Controller
                                         ->where('sales_id', $id)
                                         ->select('office', 'city', 'appointment_date', 'schedule', 'status', 'observations')
                                         ->get();
+        }
+
+        if ($sale->email === self::FALLBACK_EMAIL) {
+            $sale->email = null;
         }
 
         $sale['clients'] = $clients;
@@ -292,6 +298,8 @@ class PassportSalesController extends Controller
 
             /** billing contact */
             $billing = $request->billing;
+            $billing['email'] = trim($billing['email'] ?? '') !== '' ? $billing['email'] : self::FALLBACK_EMAIL;
+
             SalesBilling::create([
                 'sales_id'  => $sales->id,
                 'email'     => $billing['email'],
@@ -401,7 +409,7 @@ class PassportSalesController extends Controller
                 }
             }
 
-            $this->sendWelcomeEmail($sales->id);
+            $this->sendWelcomeEmail($sales->id, $is_new_user);
 
             \DB::commit();
 
@@ -432,7 +440,7 @@ class PassportSalesController extends Controller
                 $billing = $request->billing;
                 $salesBilling = SalesBilling::where('sales_id', $id)->first();
                 if ($salesBilling) {
-                    $salesBilling->email     = $billing['email'];
+                    $salesBilling->email     = trim($billing['email'] ?? '') !== '' ? $billing['email'] : self::FALLBACK_EMAIL;
                     $salesBilling->names     = $billing['names'];
                     $salesBilling->lastname1 = $billing['lastname1'];
                     $salesBilling->lastname2 = $billing['lastname2'];
@@ -571,7 +579,7 @@ class PassportSalesController extends Controller
         }
     }
 
-    private function sendWelcomeEmail($sales_id)
+    private function sendWelcomeEmail($sales_id, $is_new_user = true)
     {
         try {
             $sale = Sales::join('sales_billing', 'sales_billing.sales_id', 'sales.id')
@@ -600,13 +608,14 @@ class PassportSalesController extends Controller
 
             $data = [
                 'body' => [
-                    'sale'      => $sale,
-                    'clients'   => $salesClients,
-                    'documents' => $documents,
-                    'user'      => $user,
+                    'sale'         => $sale,
+                    'clients'      => $salesClients,
+                    'documents'    => $documents,
+                    'user'         => $user,
+                    'is_new_user'  => $is_new_user,
                 ],
                 'sender'   => 'postmaster@visas-premier.com',
-                'subject'  => 'Inicio de trámite de pasaporte',
+                'subject'  => 'Pasaporte - ' . $sale->folio,
                 'receiver' => $sale->email
             ];
 
