@@ -457,6 +457,7 @@ class ClientsController extends Controller
             $processDetails->travel_before_countries = $process['travel_before_countries'] ?? null;
             $processDetails->visa_approved = (bool) ($process['visa_approved'] ?? false);
             $processDetails->travel_countries = $process['travel_countries'] ?? null;
+            $processDetails->observations = $process['observations'] ?? null;
             $processDetails->save();
 
             /**
@@ -475,7 +476,7 @@ class ClientsController extends Controller
             $processHistory->process_id = $itemResidence['process_id'];
             $processHistory->has_tried_visa = (bool) ($history['has_tried_visa'] ?? false);
             $processHistory->date = ($history['date'] ?? null) ?: null;
-            $processHistory->observations = $history['observations'] ?? "";
+            $processHistory->observations = $history['observations'] ?? $processHistory->observations ?? "";
             $processHistory->save();
 
             /**
@@ -488,12 +489,10 @@ class ClientsController extends Controller
             $visaData = $request->visa;
 
             if($visaData){
-                if(isset($visa['id'])){
-                    $visa = Visas::find($visaData['id']);
-                }
+                $visa = Visas::where('process_id', $itemResidence['process_id'])->first();
 
                 if(!isset($visa)){
-                    $visa = new Visas();                    
+                    $visa = new Visas();
                 }
                 $visa->process_id = $itemResidence['process_id'];
                 $visa->number = $visaData['number'];
