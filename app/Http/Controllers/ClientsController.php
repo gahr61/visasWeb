@@ -514,16 +514,13 @@ class ClientsController extends Controller
                 }
             }
 
-            $networks = $request->social_networks;
+            $networks = $request->social_networks ?? [];
+
+            ClientsSocialNetwork::where('clients_id', $request->clients_id)->delete();
 
             foreach($networks as $item){
-                $social = ClientsSocialNetwork::where('id', $item['id'])->first();
-
-                if(!isset($social)){
-                    $social = new ClientsSocialNetwork();
-                }
-
-                $social->clients_id = $item['clients_id'];
+                $social = new ClientsSocialNetwork();
+                $social->clients_id = $request->clients_id;
                 $social->network = $item['socialNetwork'];
                 $social->username = $item['username'];
                 $social->email = $item['email'];
