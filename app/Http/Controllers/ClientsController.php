@@ -366,6 +366,44 @@ class ClientsController extends Controller
         }
     }
 
+    /**
+     * save client social networks (independent of estancia/travel data)
+     */
+    public function clientsSaveSocialNetworks(Request $request){
+        try{
+            \DB::beginTransaction();
+
+            $clients_id = $request->clients_id;
+            $networks = $request->social_networks ?? [];
+
+            ClientsSocialNetwork::where('clients_id', $clients_id)->delete();
+
+            foreach($networks as $item){
+                $social = new ClientsSocialNetwork();
+                $social->clients_id = $clients_id;
+                $social->network = $item['socialNetwork'];
+                $social->username = $item['username'];
+                $social->email = $item['email'];
+                $social->save();
+            }
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Las redes sociales se registraron correctamente'
+            ]);
+
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error. '.$e->getMessage().' '.$e->getLine()
+            ]);
+        }
+    }
+
     public function clientsSaveLanguages(Request $request){
         try{
             \DB::beginTransaction();
@@ -512,19 +550,6 @@ class ClientsController extends Controller
                     $clientVisa->expiration_date = $visaData['expiration_date'];
                     $clientVisa->save();
                 }
-            }
-
-            $networks = $request->social_networks ?? [];
-
-            ClientsSocialNetwork::where('clients_id', $request->clients_id)->delete();
-
-            foreach($networks as $item){
-                $social = new ClientsSocialNetwork();
-                $social->clients_id = $request->clients_id;
-                $social->network = $item['socialNetwork'];
-                $social->username = $item['username'];
-                $social->email = $item['email'];
-                $social->save();
             }
 
             if($request->has('mark_complete')){

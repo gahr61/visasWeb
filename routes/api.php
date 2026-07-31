@@ -72,6 +72,7 @@ Route::group(['prefix'=>'v1'], function(){
             Route::post('clients/studies', 'clientsSaveSchools');
             Route::post('clients/languages', 'clientsSaveLanguages');
             Route::post('clients/travel', 'clientsSaveTravel');
+            Route::post('clients/social_networks', 'clientsSaveSocialNetworks');
             Route::get('clients/autocomplete', 'clientsAutocomplete');
             Route::get('clients/data/{id}', 'clientsData');
         });        
