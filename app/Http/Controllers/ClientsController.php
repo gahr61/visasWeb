@@ -272,9 +272,14 @@ class ClientsController extends Controller
                 $occupations_id = $item['occupations_id'] ?? null;
 
                 if(!empty($item['otherOccupation'])){
-                    $occupation = new Occupations();
-                    $occupation->name = $item['otherOccupation'];
-                    $occupation->save();
+                    $otherOccupationName = trim($item['otherOccupation']);
+                    $occupation = Occupations::where('name', $otherOccupationName)->first();
+
+                    if(!$occupation){
+                        $occupation = new Occupations();
+                        $occupation->name = $otherOccupationName;
+                        $occupation->save();
+                    }
 
                     $occupations_id = $occupation->id;
                 }
