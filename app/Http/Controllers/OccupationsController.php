@@ -10,7 +10,7 @@ use App\Models\ClientsOccupation;
 class OccupationsController extends Controller
 {
     public function list(){
-        $occupations = Occupations::select('id', 'name')->orderBy('name', 'ASC')->get();
+        $occupations = Occupations::select('id', 'name', 'is_protected')->orderBy('name', 'ASC')->get();
 
         return response()->json([
             'success' => true,
@@ -81,6 +81,15 @@ class OccupationsController extends Controller
         try{
             \DB::beginTransaction();
 
+            $occupation = Occupations::find($id);
+
+            if($occupation && $occupation->is_protected){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este registro no se puede eliminar'
+                ]);
+            }
+
             //search if client has occupation
             $clients = ClientsOccupation::where('occupations_id', $id)->get();
 
@@ -91,7 +100,6 @@ class OccupationsController extends Controller
                 ]);
             }
 
-            $occupation = Occupations::where('id', $id);
             $occupation->delete();
 
             \DB::commit();

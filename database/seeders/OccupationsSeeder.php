@@ -91,6 +91,7 @@ class OccupationsSeeder extends Seeder
             ['name' => 'Técnico/a en mantenimiento'],
             ['name' => 'Encargado/a de tienda'],
             ['name' => 'Supervisor/a de producción'],
+            ['name' => 'Jubilado', 'is_protected' => true],
             ['name' => 'Otro']
         ]
 );
