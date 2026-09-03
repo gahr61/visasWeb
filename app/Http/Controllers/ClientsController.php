@@ -281,12 +281,12 @@ class ClientsController extends Controller
 
                 $clientOccupation = new ClientsOccupation();
                 $clientOccupation->clients_id = $clients_id;
-                $clientOccupation->name = $item['name'] ?? null;
+                $clientOccupation->name = ($item['name'] ?? '') !== '' ? $item['name'] : null;
                 $clientOccupation->occupations_id = $occupations_id;
                 $clientOccupation->is_primary = $primaryIndex !== false ? $index === $primaryIndex : $index === 0;
-                $clientOccupation->salary = $item['salary'] ?? null;
+                $clientOccupation->salary = ($item['salary'] ?? '') !== '' ? $item['salary'] : null;
                 $clientOccupation->antiquity = $item['antiquity'] ?? null;
-                $clientOccupation->hire_date = $item['hire_date'] ?? null;
+                $clientOccupation->hire_date = ($item['hire_date'] ?? '') !== '' ? $item['hire_date'] : null;
                 $clientOccupation->activities_description = $item['activities_description'] ?? null;
 
                 if(isset($item['address'])){
@@ -296,8 +296,8 @@ class ClientsController extends Controller
                     $clientOccupation->postal_code = $item['address']['postal_code'] ?? null;
                     $clientOccupation->colony = $item['address']['colony'] ?? null;
                     $clientOccupation->city = $item['address']['city'] ?? null;
-                    $clientOccupation->countries_id = $item['address']['countries_id'] ?? null;
-                    $clientOccupation->states_id = $item['address']['states_id'] ?? null;
+                    $clientOccupation->countries_id = ($item['address']['countries_id'] ?? '') !== '' ? $item['address']['countries_id'] : null;
+                    $clientOccupation->states_id = ($item['address']['states_id'] ?? '') !== '' ? $item['address']['states_id'] : null;
                 }
 
                 $clientOccupation->save();
