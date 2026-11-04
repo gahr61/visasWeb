@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
+
 use App\Models\ProcessDetails;
 use App\Models\SalesProcessAccount;
 
 class ProcessController extends Controller
 {
+    use AuthorizesProcedures;
+
     public function updateDS160(Request $request){
+        foreach($request->all() as $detail){
+            if(!$this->canManageProcess($request->user(), $detail['process_id'] ?? null)){
+                return $this->forbidden();
+            }
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -45,6 +55,19 @@ class ProcessController extends Controller
     }
 
      public function processAccountUpdate(Request $request){
+        foreach($request->all() as $client){
+            $salesId = $client['sales_id'] ?? null;
+
+            $clientInSale = \DB::table('sales_clients')
+                                ->where('sales_id', $salesId)
+                                ->where('clients_id', $client['clients_id'] ?? null)
+                                ->exists();
+
+            if(!$clientInSale || !$this->canManageSale($request->user(), $salesId, 'procedure_visa_update')){
+                return $this->forbidden();
+            }
+        }
+
         try{
             \DB::beginTransaction();
 

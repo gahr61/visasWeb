@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
+
 use App\Models\ClientAddress;
 use App\Models\Clients;
 use App\Models\ClientsPhones;
@@ -26,6 +28,8 @@ use App\Models\Process;
 
 class ClientsController extends Controller
 {
+    use AuthorizesProcedures;
+
     /**
      * Clients confirm visa from web
      */
@@ -98,6 +102,10 @@ class ClientsController extends Controller
      * Update clients info
      */
     public function clientsUpdate($id, Request $request){
+        if(!$this->canManageClient($request->user(), $id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -135,6 +143,18 @@ class ClientsController extends Controller
      * update client address
      */
     public function clientsUpdateAddress(Request $request){
+        if(!$this->canManageClient($request->user(), $request->input('address.clients_id'))){
+            return $this->forbidden();
+        }
+
+        if(!is_null($request->id)){
+            $owner = ClientAddress::where('id', $request->id)->value('clients_id');
+
+            if(!is_null($owner) && $owner != $request->input('address.clients_id')){
+                return $this->forbidden();
+            }
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -177,6 +197,10 @@ class ClientsController extends Controller
      * update client phones
      */
     public function clientsUpdatePhones(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -214,6 +238,10 @@ class ClientsController extends Controller
      * save or update relationships
      */
     public function clientsRelationships(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -228,7 +256,7 @@ class ClientsController extends Controller
                 $relationship->clients_id = $id;
                 $relationship->relationship = $item['relationship'];
                 $relationship->full_name = $item['fullname'];
-                $relationship->birthdate = $item['birthdate'];
+                $relationship->birthdate = $item['birthdate'] ?: null;
                 $relationship->has_visa = $item['has_visa'];
                 $relationship->lives_in_usa = $item['lives_in_usa'] ?? false;
                 $relationship->citizen_status = $item['citizen_status'] ?: null;
@@ -258,6 +286,10 @@ class ClientsController extends Controller
      * save clients occupations (list, one may be flagged as primary)
      */
     public function clientsSaveUpdateOccupation(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -329,6 +361,10 @@ class ClientsController extends Controller
      * save client schools
      */
     public function clientsSaveSchools(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -375,6 +411,10 @@ class ClientsController extends Controller
      * save client social networks (independent of estancia/travel data)
      */
     public function clientsSaveSocialNetworks(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -388,7 +428,7 @@ class ClientsController extends Controller
                 $social->clients_id = $clients_id;
                 $social->network = $item['socialNetwork'];
                 $social->username = $item['username'];
-                $social->email = $item['email'];
+                $social->email = $item['email'] ?: null;
                 $social->save();
             }
 
@@ -410,6 +450,10 @@ class ClientsController extends Controller
     }
 
     public function clientsSaveLanguages(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
@@ -443,6 +487,20 @@ class ClientsController extends Controller
     }
 
     public function clientsSaveTravel(Request $request){
+        if(!$this->canManageClient($request->user(), $request->clients_id)){
+            return $this->forbidden();
+        }
+
+        // the process must exist and belong to the same client
+        $processId = $request->input('residence.process_id');
+        $processBelongsToClient = Process::where('id', $processId)
+                                    ->where('clients_id', $request->clients_id)
+                                    ->exists();
+
+        if(!$processBelongsToClient || !$this->canManageProcess($request->user(), $processId)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 

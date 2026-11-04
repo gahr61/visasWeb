@@ -24,6 +24,8 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\DashboardController;
 
+use App\Http\Middleware\RestrictClientRole;
+
 Route::group(['prefix'=>'v1'], function(){
     Route::group(['prefix'=>'auth'], function(){
     	Route::post('register', [AuthController::class, 'register']);
@@ -45,7 +47,7 @@ Route::group(['prefix'=>'v1'], function(){
 
     Route::post('sales/clients/confirm', [SalesBillingController::class, 'visaPaymentUpdate']);    
     
-    Route::group(['middleware' => 'auth:sanctum'], function(){
+    Route::group(['middleware' => ['auth:sanctum', RestrictClientRole::class]], function(){
         Route::get('dashboard/indicators', [DashboardController::class, 'indicators']);
 
         Route::controller(BranchOfficeController::class)->group(function(){

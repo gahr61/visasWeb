@@ -4,14 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
+
 use App\Models\Passport;
 
 class PassportController extends Controller
 {
+    use AuthorizesProcedures;
+
      /**
      * Update passport data
      */
     public function update($id, Request $request){
+        $processId = Passport::where('id', $id)->value('process_id');
+
+        if(is_null($processId)){
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el pasaporte'
+            ], 404);
+        }
+
+        if(!$this->canManageProcess($request->user(), $processId)){
+            return $this->forbidden();
+        }
+
         try{
             \DB::beginTransaction();
 
