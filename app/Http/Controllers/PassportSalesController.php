@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
 use App\Models\BranchOffices;
 use App\Models\SalesConcepts;
 use App\Models\ScheduleDetails;
@@ -29,6 +30,8 @@ use App\Models\User;
 
 class PassportSalesController extends Controller
 {
+    use AuthorizesProcedures;
+
     const FALLBACK_EMAIL = 'tramites@visas-premier.com';
 
     /**
@@ -42,6 +45,7 @@ class PassportSalesController extends Controller
                         ->join('clients', 'clients.id', '=', 'sales_clients.clients_id')
                         ->join('process as p', function ($join) {
                             $join->on('p.clients_id', '=', 'clients.id')
+                                 ->on('p.sales_id', '=', 'sales.id')
                                  ->where('p.type', 'Pasaporte');
                         })
                         ->selectRaw('
@@ -152,9 +156,17 @@ class PassportSalesController extends Controller
                     )
                     ->first();
 
+        if (is_null($sale)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el trámite'
+            ], 404);
+        }
+
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
                             ->join('process', function ($join) {
                                 $join->on('process.clients_id', '=', 'clients.id')
+                                     ->on('process.sales_id', '=', 'sales_clients.sales_id')
                                      ->where('process.type', 'Pasaporte');
                             })
                             ->leftJoin('passport', 'passport.process_id', 'process.id')
@@ -375,6 +387,7 @@ class PassportSalesController extends Controller
                 SalesClients::create(['sales_id' => $sales->id, 'clients_id' => $client->id]);
 
                 $process               = new Process();
+                $process->sales_id     = $sales->id;
                 $process->clients_id   = $client->id;
                 $process->type         = 'Pasaporte';
                 $process->subtype      = $item['process']['subtype'];
@@ -432,6 +445,10 @@ class PassportSalesController extends Controller
      */
     public function update($id, Request $request)
     {
+        if (!$this->canManageSale($request->user(), $id, 'procedure_passport_update')) {
+            return $this->forbidden();
+        }
+
         try {
             \DB::beginTransaction();
 
@@ -470,17 +487,25 @@ class PassportSalesController extends Controller
             /** per-client process observations */
             if ($request->filled('clients')) {
                 foreach ($request->clients as $item) {
-                    if (isset($item['process_id'])) {
-                        $process = Process::where('id', $item['process_id'])->first();
-                        if ($process) {
-                            $process->observations = $item['observations'] ?? null;
-                            $process->complete     = $item['complete'] ?? $process->complete;
-                            $process->save();
-                        }
+                    if (!isset($item['process_id'])) {
+                        continue;
                     }
 
+                    /** only processes that belong to this sale can be edited */
+                    $process = Process::where('id', $item['process_id'])
+                                    ->where('sales_id', $id)
+                                    ->first();
+
+                    if (!$process) {
+                        continue;
+                    }
+
+                    $process->observations = $item['observations'] ?? null;
+                    $process->complete     = $item['complete'] ?? $process->complete;
+                    $process->save();
+
                     /** update per-client process status */
-                    if (isset($item['process_id']) && isset($item['process_status'])) {
+                    if (isset($item['process_status'])) {
                         ProcessStatus::where('process_id', $item['process_id'])->update(['is_last' => false]);
                         ProcessStatus::create([
                             'process_id' => $item['process_id'],
@@ -510,8 +535,12 @@ class PassportSalesController extends Controller
     /**
      * Delete a passport sale and its cascaded records
      */
-    public function delete($id)
+    public function delete(Request $request, $id)
     {
+        if ($this->isClientUser($request->user()) || !$request->user()->can('procedure_passport_delete')) {
+            return $this->forbidden();
+        }
+
         try {
             \DB::beginTransaction();
 
@@ -539,10 +568,20 @@ class PassportSalesController extends Controller
      */
     public function scheduleUpdate($id, Request $request)
     {
+        if (!$this->canManageSale($request->user(), $id, 'procedure_passport_update')) {
+            return $this->forbidden();
+        }
+
+        $saleClientsIds = SalesClients::where('sales_id', $id)->pluck('clients_id')->all();
+
         try {
             \DB::beginTransaction();
 
             foreach ($request->all() as $item) {
+                if (!in_array($item['clients_id'], $saleClientsIds)) {
+                    continue;
+                }
+
                 $schedule = ScheduleDetails::where('sales_id', $id)
                                 ->where('clients_id', $item['clients_id'])
                                 ->where('office', $item['office'])
@@ -592,6 +631,7 @@ class PassportSalesController extends Controller
             $salesClients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
                                     ->join('process', function ($join) {
                                         $join->on('process.clients_id', '=', 'clients.id')
+                                             ->on('process.sales_id', '=', 'sales_clients.sales_id')
                                              ->where('process.type', 'Pasaporte');
                                     })
                                     ->select(

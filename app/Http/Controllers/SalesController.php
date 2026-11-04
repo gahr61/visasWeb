@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
+
 use App\Models\BranchOffices;
 use App\Models\Countries;
 use App\Models\Commissions;
@@ -31,6 +33,8 @@ use App\Models\User;
 
 class SalesController extends Controller
 {
+    use AuthorizesProcedures;
+
     public function info($id){
         $sale = Sales::join('branch_office', 'branch_office.id', 'sales.branch_offices_id')
                     ->join('sales_process', 'sales_process.sales_id', 'sales.id')
@@ -54,7 +58,10 @@ class SalesController extends Controller
                     ->first();
 
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
-                            ->join('process', 'process.clients_id', 'clients.id')
+                            ->join('process', function($join){
+                                $join->on('process.clients_id', '=', 'clients.id')
+                                     ->on('process.sales_id', '=', 'sales_clients.sales_id');
+                            })
                             ->leftJoin('process_details', 'process_details.process_id', 'process.id')
                             ->leftJoin('sales_process_account', 'sales_process_account.clients_id', 'clients.id')
                             ->select(
@@ -69,6 +76,7 @@ class SalesController extends Controller
         foreach($clients as $client){
             $client['schedule'] = \DB::table('schedule_details')
                                         ->where('clients_id', $client->clients_id)
+                                        ->where('sales_id', $id)
                                         ->select('office', 'appointment_date', 'schedule', 'status', 'observations', 'city')
                                         ->get();
 
@@ -93,7 +101,10 @@ class SalesController extends Controller
         $sale->date = date_format($date, 'd/m/Y');
 
         $salesClients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')
-                                ->join('process', 'process.clients_id', 'clients.id')
+                                ->join('process', function($join){
+                                    $join->on('process.clients_id', '=', 'clients.id')
+                                         ->on('process.sales_id', '=', 'sales_clients.sales_id');
+                                })
                                 ->select(
                                     'clients.names', 'clients.lastname1', 'clients.lastname2', 
                                     'process.type', 'process.age_type', 'process.subtype', 'process.option_type', 'process.visa_type'
@@ -149,6 +160,7 @@ class SalesController extends Controller
                         ->leftJoin('clients', 'clients.id', '=', 'sales_clients.clients_id')
                         ->leftJoin('process as p', function($join){
                             $join->on('p.clients_id', '=', 'clients.id')
+                                 ->on('p.sales_id', '=', 'sales.id')
                                  ->where('p.type', 'Visa');
                         })
                         ->leftJoin('process_details as pd', 'pd.process_id', '=', 'p.id')
@@ -169,15 +181,6 @@ class SalesController extends Controller
                             'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2',
                             'sales_billing.email', 'sales_billing.phone', 'sales_status.status'
                         );
-
-        if($request->user()->role === 'ventas'){
-            $query->whereExists(function($sub){
-                $sub->selectRaw('1')
-                    ->from('sales_users')
-                    ->whereColumn('sales_users.sales_id', 'sales.id')
-                    ->where('sales_users.users_id', \Auth::id());
-            });
-        }
 
         if($request->filled('folio'))
             $query->where('sales.folio', 'like', '%'.$request->folio.'%');
@@ -238,7 +241,11 @@ class SalesController extends Controller
         ]);
     }
 
-    public function visa_delete($id){
+    public function visa_delete(Request $request, $id){
+        if($this->isClientUser($request->user()) || !$request->user()->can('procedure_visa_delete')){
+            return $this->forbidden();
+        }
+
         try {
             \DB::beginTransaction();
 
@@ -305,7 +312,10 @@ class SalesController extends Controller
     /** visa procedure list */
     public function visa_client_list(){
         $user = \Auth::user();
-    
+
+        // the client only sees their own visa procedures that are still in progress
+        $activeSalesIds = $this->clientActiveSalesIds($user);
+
         $visas = Sales::join('sales_users', 'sales_users.sales_id', 'sales.id')
                         ->join('sales_status', 'sales_status.sales_id', 'sales.id')
                         ->selectRaw('
@@ -313,6 +323,7 @@ class SalesController extends Controller
                         ')
                         ->where('sales_status.is_last', true)
                         ->where('sales_users.users_id', $user->id)
+                        ->whereIn('sales.id', $activeSalesIds)
                         ->groupBy(
                             'sales.id', 'sales.folio', 'sales.date', 'sales_status.status'
                         )
@@ -506,6 +517,7 @@ class SalesController extends Controller
                 
                 /** process */
                 $process = new Process();
+                $process->sales_id = $sales->id;
                 $process->clients_id = $client->id;
                 $process->type = $item['process']['type'];
                 $process->subtype = $item['process']['subtype'];

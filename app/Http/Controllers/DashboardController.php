@@ -51,12 +51,13 @@ class DashboardController extends Controller
                 ->toArray();
 
             // ── Mis trámites activos y por estado (estado actual) ────
-            $myProcessIds = empty($myClientIds)
-                ? []
-                : \DB::table('process')
-                    ->whereIn('clients_id', $myClientIds)
-                    ->pluck('id')
-                    ->toArray();
+            $myProcessIds = \DB::table('process')
+                ->join('sales_users', 'sales_users.sales_id', '=', 'process.sales_id')
+                ->where('sales_users.users_id', $user->id)
+                ->pluck('process.id')
+                ->unique()
+                ->values()
+                ->toArray();
 
             $data['my_procedures'] = [
                 'active'    => empty($myProcessIds) ? 0 : \DB::table('process_status')

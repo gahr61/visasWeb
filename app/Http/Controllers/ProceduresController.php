@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
+
 use App\Models\ClientAddress;
 use App\Models\ClientsOccupation;
 use App\Models\ClientsParents;
@@ -24,8 +26,21 @@ use App\Models\ScheduleDetails;
 
 class ProceduresController extends Controller
 {
-    public function infoVisasDetails($id){
+    use AuthorizesProcedures;
+
+    public function infoVisasDetails(Request $request, $id){
+        if(!$this->canManageSale($request->user(), $id, 'procedure_visa')){
+            return $this->forbidden();
+        }
+
         $sale = Sales::select('type', 'folio')->where('id', $id)->first();
+
+        if(is_null($sale)){
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el trámite'
+            ], 404);
+        }
 
         $clients = SalesClients::join('clients', 'clients.id', 'sales_clients.clients_id')                                                
                         ->select(
@@ -34,11 +49,22 @@ class ProceduresController extends Controller
                         )
                         ->where('sales_clients.sales_id', $id)
                         ->get();
-        $data = [];
+
 
         foreach($clients as $client){
-            $client['process'] = Process::select('id', 'observations')->where('clients_id', $client->id)
-                                            ->orderBy('id', 'desc')->first();
+            // the process must belong to THIS sale, not just to the client
+            $client['process'] = Process::select('id', 'observations')
+                                            ->where('clients_id', $client->id)
+                                            ->where('sales_id', $id)
+                                            ->orderBy('id', 'desc')
+                                            ->first();
+
+            if(is_null($client['process'])){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró el trámite de '.$client->names.' '.$client->lastname1.' para esta venta'
+                ], 404);
+            }
 
             $client['account'] = SalesProcessAccount::where('clients_id', $client->id)
                                                 ->select('id', 'email', 'password')
@@ -125,12 +151,14 @@ class ProceduresController extends Controller
                                             ->get();
 
             $client['cas'] = ScheduleDetails::where('clients_id', $client->id)
+                                            ->where('sales_id', $id)
                                             ->where('office', 'CAS')
                                             ->select('appointment_date', 'schedule', 'city')
                                             ->orderBy('id', 'desc')
                                             ->first();
 
             $client['consulado'] = ScheduleDetails::where('clients_id', $client->id)
+                                            ->where('sales_id', $id)
                                             ->where('office', 'Consulado')
                                             ->select('appointment_date', 'schedule', 'city')
                                             ->orderBy('id', 'desc')
