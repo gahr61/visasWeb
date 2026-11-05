@@ -147,19 +147,16 @@ class ClientsController extends Controller
             return $this->forbidden();
         }
 
-        if(!is_null($request->id)){
-            $owner = ClientAddress::where('id', $request->id)->value('clients_id');
-
-            if(!is_null($owner) && $owner != $request->input('address.clients_id')){
-                return $this->forbidden();
-            }
-        }
-
         try{
             \DB::beginTransaction();
 
-            $address = ClientAddress::find($request->id);
-            if(is_null($request->id)){
+            // looked up by clients_id (same record the details screen loads), never by
+            // the id sent by the client, so another client's address can't be overwritten
+            $address = ClientAddress::where('clients_id', $request->address['clients_id'])
+                            ->orderByDesc('id')
+                            ->first();
+
+            if(is_null($address)){
                 $address = new ClientAddress();
 
                 $address->clients_id = $request->address['clients_id'];
@@ -507,13 +504,11 @@ class ClientsController extends Controller
             //save residence
             $itemResidence = $request->residence;
 
-            if(isset($itemResidence['id'])){
-                $residence = Residence::find($itemResidence['id']);
+            // records are looked up by the (already authorized) process_id, never by the
+            // id sent by the client: an id from another process would move that record here
+            $residence = Residence::where('process_id', $processId)->orderByDesc('id')->first();
 
-                if(!isset($residence)){
-                    $residence = new Residence();
-                }
-            }else{
+            if(!isset($residence)){
                 $residence = new Residence();
             }
             
@@ -534,7 +529,7 @@ class ClientsController extends Controller
             //save process details
             $process =$request->process_details;
 
-            $processDetails = ProcessDetails::find($process['id'] ?? null);
+            $processDetails = ProcessDetails::where('process_id', $processId)->orderByDesc('id')->first();
 
             if(!isset($processDetails)){
                 $processDetails = new ProcessDetails();
@@ -566,10 +561,8 @@ class ClientsController extends Controller
              */
             $history = $request->history;
 
-            if(isset($history['id'])){
-                $processHistory = ProcessHistory::find($history['id']);
-            }
-            
+            $processHistory = ProcessHistory::where('process_id', $processId)->orderByDesc('id')->first();
+
             if(!isset($processHistory)){
                 $processHistory = new ProcessHistory();                
             }
