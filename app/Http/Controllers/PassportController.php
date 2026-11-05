@@ -17,6 +17,7 @@ class PassportController extends Controller
      */
     public function update($id, Request $request){
         $processId = Passport::where('id', $id)->value('process_id');
+        $processType = \DB::table('process')->where('id', $processId)->value('type');
 
         if(is_null($processId)){
             return response()->json([
@@ -25,7 +26,9 @@ class PassportController extends Controller
             ], 404);
         }
 
-        if(!$this->canManageProcess($request->user(), $processId)){
+        $permission = $processType === 'Pasaporte' ? 'procedure_passport_update' : 'procedure_visa_update';
+
+        if(!$this->canManageProcess($request->user(), $processId, $permission)){
             return $this->forbidden();
         }
 

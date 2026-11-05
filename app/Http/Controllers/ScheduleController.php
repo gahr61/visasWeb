@@ -3,11 +3,29 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+
+use App\Http\Controllers\Concerns\AuthorizesProcedures;
 use App\Models\ScheduleDetails;
 
 class ScheduleController extends Controller
 {
+    use AuthorizesProcedures;
+
     public function update(Request $request){
+        foreach($request->all() as $client){
+            $salesId = $client['sales_id'] ?? null;
+
+            $clientInSale = \DB::table('sales_clients')
+                                ->where('sales_id', $salesId)
+                                ->where('clients_id', $client['clients_id'] ?? null)
+                                ->exists();
+
+            if(!$clientInSale || $this->isClientUser($request->user())
+                || !$this->canManageSale($request->user(), $salesId, 'procedure_visa_update')){
+                return $this->forbidden();
+            }
+        }
+
         try {
             \DB::beginTransaction();
 
