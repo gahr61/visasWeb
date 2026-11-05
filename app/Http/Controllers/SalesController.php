@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Concerns\AuthorizesProcedures;
+use App\Http\Controllers\Concerns\ManagesApplicants;
 
 use App\Models\BranchOffices;
 use App\Models\Countries;
@@ -33,9 +34,13 @@ use App\Models\User;
 
 class SalesController extends Controller
 {
-    use AuthorizesProcedures;
+    use AuthorizesProcedures, ManagesApplicants;
 
-    public function info($id){
+    public function info(Request $request, $id){
+        if(!$this->canManageSale($request->user(), $id, 'procedure_visa')){
+            return $this->forbidden();
+        }
+
         $sale = Sales::join('branch_office', 'branch_office.id', 'sales.branch_offices_id')
                     ->join('sales_process', 'sales_process.sales_id', 'sales.id')
                     ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
@@ -66,9 +71,18 @@ class SalesController extends Controller
                             ->leftJoin('sales_process_account', 'sales_process_account.clients_id', 'clients.id')
                             ->select(
                                 'clients.id as clients_id', 'clients.names', 'clients.lastname1', 'clients.lastname2', 'clients.curp', 
+                                'clients.birthdate',
                                 'process.id as process_id', 'process.type', 'process.subtype', 'process.age_type', 'process.option_type', 'process.visa_type', 'process.complete',
                                 'process_details.clave_ds_160 as ds_160',
                                 'sales_process_account.email'
+                            )
+                            ->selectSub(
+                                ClientsPhones::select('number')
+                                    ->whereColumn('clients_phones.clients_id', 'clients.id')
+                                    ->where('type', 'Celular')
+                                    ->orderBy('id')
+                                    ->limit(1),
+                                'phone'
                             )
                             ->where('sales_clients.sales_id', $id)
                             ->get();
@@ -154,6 +168,10 @@ class SalesController extends Controller
 
     /** visa procedure list */
     public function visa_list(Request $request){
+        if(!$request->user()->can('procedure_visa')){
+            return $this->forbidden();
+        }
+
         $query = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
                         ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                         ->join('sales_status', 'sales_status.sales_id', 'sales.id')
@@ -181,6 +199,16 @@ class SalesController extends Controller
                             'sales_billing.names', 'sales_billing.lastname1', 'sales_billing.lastname2',
                             'sales_billing.email', 'sales_billing.phone', 'sales_status.status'
                         );
+
+        // ventas: solo sus ventas asignadas (igual que en pasaporte)
+        if($request->user()->role === 'ventas'){
+            $query->whereExists(function($sub){
+                $sub->selectRaw('1')
+                    ->from('sales_users')
+                    ->whereColumn('sales_users.sales_id', 'sales.id')
+                    ->where('sales_users.users_id', \Auth::id());
+            });
+        }
 
         if($request->filled('folio'))
             $query->where('sales.folio', 'like', '%'.$request->folio.'%');
@@ -242,7 +270,7 @@ class SalesController extends Controller
     }
 
     public function visa_delete(Request $request, $id){
-        if($this->isClientUser($request->user()) || !$request->user()->can('procedure_visa_delete')){
+        if($this->isClientUser($request->user()) || !$this->canManageSale($request->user(), $id, 'procedure_visa_delete')){
             return $this->forbidden();
         }
 
@@ -268,9 +296,94 @@ class SalesController extends Controller
         }
     }
 
+    /**
+     * Datos de una venta (visa o pasaporte) en el formato del formulario de alta,
+     * para editarla con el mismo formulario
+     */
+    public function edit_data(Request $request, $id){
+        $sale = Sales::find($id);
+
+        if(is_null($sale)){
+            return response()->json(['success' => false, 'message' => 'No se encontró el trámite'], 404);
+        }
+
+        $type       = Process::where('sales_id', $id)->where('type', 'Visa')->exists() ? 'Visa' : 'Pasaporte';
+        $permission = $type === 'Visa' ? 'procedure_visa_update' : 'procedure_passport_update';
+
+        if($this->isClientUser($request->user()) || !$this->canManageSale($request->user(), $id, $permission)){
+            return $this->forbidden();
+        }
+
+        $data = $this->saleEditData($sale, $type);
+        $data['procedure'] = $type;
+
+        if($type === 'Pasaporte' && ($data['billing']['email'] ?? null) === PassportSalesController::FALLBACK_EMAIL){
+            $data['billing']['email'] = null;
+        }
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    /**
+     * Edición de una venta de visa con el formulario de alta: tipo de venta, datos de
+     * quien realiza el trámite, solicitantes (existentes y nuevos), precio y abono.
+     * El estatus no se edita aquí: lo mueve el flujo de la ficha.
+     */
+    public function visa_update(Request $request, $id){
+        if($this->isClientUser($request->user()) || !$this->canManageSale($request->user(), $id, 'procedure_visa_update')){
+            return $this->forbidden();
+        }
+
+        $sale = Sales::find($id);
+
+        if(is_null($sale)){
+            return response()->json(['success' => false, 'message' => 'No se encontró el trámite'], 404);
+        }
+
+        if($error = $this->invalidSaleEdit($request->all(), true)){
+            return response()->json(['success' => false, 'message' => $error], 422);
+        }
+
+        try{
+            \DB::beginTransaction();
+
+            $this->updateSaleGeneral($sale, $request->only(['type', 'billing', 'contact']));
+
+            foreach($request->input('clients', []) as $item){
+                $this->updateApplicant($sale, $item, 'Visa');
+            }
+
+            foreach($request->input('new_clients', []) as $item){
+                $this->addApplicantToSale($sale, $item, 'Visa');
+            }
+
+            $this->applyPricingAndPayment($sale, 'Visa', $request->input('pricing'), $request->input('payment'));
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'El registro se actualizó correctamente'
+            ]);
+
+        }catch(\RuntimeException $e){
+            \DB::rollback();
+
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+
+        }catch(\Exception $e){
+            \DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage().' '.$e->getLine()
+            ]);
+        }
+    }
+
     /** reveals the DS-160 portal account password for a visa sale, on demand */
     public function visaAccountPassword(Request $request, $id){
-        if(!$request->user()->can('procedure_visa_view_password')){
+        if($this->isClientUser($request->user()) || !$this->canManageSale($request->user(), $id, 'procedure_visa_view_password')){
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permiso para ver esta contraseña'

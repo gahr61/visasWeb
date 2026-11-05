@@ -136,7 +136,9 @@ Route::group(['prefix'=>'v1'], function(){
             Route::get('sales/visa/client/list', 'visa_client_list');
             Route::get('sales/visa/{id}/account/password', 'visaAccountPassword');
             Route::get('sales/{id}/details', 'info');
+            Route::get('sales/{id}/edit', 'edit_data');
             Route::delete('sales/visa/{id}/delete', 'visa_delete');
+            Route::put('sales/visa/{id}/update', 'visa_update');
         });
 
         Route::controller(SalesBillingController::class)->group(function(){

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Concerns\AuthorizesProcedures;
+use App\Http\Controllers\Concerns\ManagesApplicants;
 use App\Models\BranchOffices;
 use App\Models\SalesConcepts;
 use App\Models\ScheduleDetails;
@@ -30,15 +31,23 @@ use App\Models\User;
 
 class PassportSalesController extends Controller
 {
-    use AuthorizesProcedures;
+    use AuthorizesProcedures, ManagesApplicants;
 
     const FALLBACK_EMAIL = 'tramites@visas-premier.com';
+
+    /** valores válidos de sales_status.status y process_status.status (enums de la BD) */
+    const SALE_STATUSES    = ['Activo', 'Ficha pendiente', 'Con ficha', 'Ficha pagada', 'Finalizado'];
+    const PROCESS_STATUSES = ['Inicio', 'Por pagar', 'Informado', 'Pagado', 'Entregado', 'Finalizado'];
 
     /**
      * Passport sales list with filters and pagination
      */
     public function list(Request $request)
     {
+        if (!$request->user()->can('procedure_passport')) {
+            return $this->forbidden();
+        }
+
         $query = Sales::join('sales_clients', 'sales_clients.sales_id', 'sales.id')
                         ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
                         ->join('sales_status', 'sales_status.sales_id', 'sales.id')
@@ -129,8 +138,12 @@ class PassportSalesController extends Controller
     /**
      * Full detail of a passport sale
      */
-    public function info($id)
+    public function info(Request $request, $id)
     {
+        if (!$this->canManageSale($request->user(), $id, 'procedure_passport')) {
+            return $this->forbidden();
+        }
+
         $sale = Sales::join('branch_office', 'branch_office.id', 'sales.branch_offices_id')
                     ->join('sales_process', 'sales_process.sales_id', 'sales.id')
                     ->join('sales_billing', 'sales_billing.sales_id', 'sales.id')
@@ -174,10 +187,6 @@ class PassportSalesController extends Controller
                                 $join->on('process_status.process_id', '=', 'process.id')
                                      ->where('process_status.is_last', true);
                             })
-                            ->leftJoin('clients_phones', function ($join) {
-                                $join->on('clients_phones.clients_id', '=', 'clients.id')
-                                     ->where('clients_phones.type', 'Celular');
-                            })
                             ->select(
                                 'clients.id as clients_id',
                                 'clients.names', 'clients.lastname1', 'clients.lastname2',
@@ -190,8 +199,16 @@ class PassportSalesController extends Controller
                                 'passport.number as passport_number',
                                 'passport.expedition_date',
                                 'passport.expiration_date',
-                                'process_status.status as process_status',
-                                'clients_phones.number as phone'
+                                'process_status.status as process_status'
+                            )
+                            // un solo celular por solicitante: un join duplicaba al solicitante si tenía varios
+                            ->selectSub(
+                                ClientsPhones::select('number')
+                                    ->whereColumn('clients_phones.clients_id', 'clients.id')
+                                    ->where('type', 'Celular')
+                                    ->orderBy('id')
+                                    ->limit(1),
+                                'phone'
                             )
                             ->where('sales_clients.sales_id', $id)
                             ->get();
@@ -441,78 +458,121 @@ class PassportSalesController extends Controller
     }
 
     /**
-     * Update billing, payment summary and per-client process data
+     * Edición de una venta de pasaporte: datos de venta, abono y estatus (ficha) y,
+     * con el formulario de alta, solicitantes (existentes y nuevos), precio y abono
      */
     public function update($id, Request $request)
     {
-        if (!$this->canManageSale($request->user(), $id, 'procedure_passport_update')) {
+        if ($this->isClientUser($request->user()) || !$this->canManageSale($request->user(), $id, 'procedure_passport_update')) {
             return $this->forbidden();
+        }
+
+        $sale = Sales::find($id);
+
+        if (is_null($sale)) {
+            return response()->json(['success' => false, 'message' => 'No se encontró el trámite'], 404);
+        }
+
+        if ($error = $this->invalidSaleEdit($request->all(), false)) {
+            return response()->json(['success' => false, 'message' => $error], 422);
+        }
+
+        /** abono: numérico, entre 0 y el total (el nuevo, si se recalcula); el saldo siempre es total - abono */
+        if ($request->filled('sale_process')) {
+            $advance = $request->input('sale_process.advance_payment');
+            $total   = $request->filled('pricing') ? round((float) $request->input('pricing.total'), 2) : (float) $sale->total;
+
+            if (!is_numeric($advance) || $advance < 0 || $advance > $total) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El abono debe ser un monto entre 0 y el total de la venta ($' . $total . ')'
+                ], 422);
+            }
+        }
+
+        if ($request->filled('status') && !in_array($request->status, self::SALE_STATUSES, true)) {
+            return response()->json(['success' => false, 'message' => 'Estatus de venta no válido'], 422);
+        }
+
+        foreach ($request->input('clients', []) as $item) {
+            if (isset($item['process_status']) && !in_array($item['process_status'], self::PROCESS_STATUSES, true)) {
+                return response()->json(['success' => false, 'message' => 'Estatus de trámite no válido'], 422);
+            }
         }
 
         try {
             \DB::beginTransaction();
 
-            /** billing contact */
-            if ($request->filled('billing')) {
-                $billing = $request->billing;
-                $salesBilling = SalesBilling::where('sales_id', $id)->first();
-                if ($salesBilling) {
-                    $salesBilling->email     = trim($billing['email'] ?? '') !== '' ? $billing['email'] : self::FALLBACK_EMAIL;
-                    $salesBilling->names     = $billing['names'];
-                    $salesBilling->lastname1 = $billing['lastname1'];
-                    $salesBilling->lastname2 = $billing['lastname2'];
-                    $salesBilling->phone     = $billing['phone'];
-                    $salesBilling->save();
-                }
+            $this->updateSaleGeneral($sale, [
+                'type'    => $request->input('type'),
+                'billing' => $request->input('billing'),
+                'contact' => $request->input('contact', $request->input('sale_process.contact')),
+            ], self::FALLBACK_EMAIL);
+
+            /** solicitantes nuevos */
+            foreach ($request->input('new_clients', []) as $item) {
+                $this->addApplicantToSale($sale, $item, 'Pasaporte');
             }
 
-            /** payment summary (advance / payable) */
+            /** precio recalculado y abono adicional (formulario de edición) */
+            $this->applyPricingAndPayment($sale, 'Pasaporte', $request->input('pricing'), $request->input('payment'));
+
+            /** abono capturado directamente (modal de datos de venta) */
             if ($request->filled('sale_process')) {
-                $processData = $request->sale_process;
                 $salesProcess = SalesProcess::where('sales_id', $id)->first();
+
                 if ($salesProcess) {
-                    $salesProcess->advance_payment = $processData['advance_payment'];
-                    $salesProcess->payable         = $processData['payable'];
-                    $salesProcess->contact         = $processData['contact'];
+                    $advance = (float) $request->input('sale_process.advance_payment');
+
+                    $salesProcess->advance_payment = round($advance, 2);
+                    $salesProcess->payable         = round((float) $sale->total - $advance, 2);
                     $salesProcess->save();
                 }
             }
 
-            /** sale status */
+            /** sale status: only a new history row when it actually changes */
             if ($request->filled('status')) {
-                SalesStatus::where('sales_id', $id)->update(['is_last' => false]);
-                SalesStatus::create(['sales_id' => $id, 'status' => $request->status, 'is_last' => true]);
+                $currentStatus = SalesStatus::where('sales_id', $id)->orderByDesc('id')->value('status');
+
+                if ($currentStatus !== $request->status) {
+                    SalesStatus::where('sales_id', $id)->update(['is_last' => false]);
+                    SalesStatus::create(['sales_id' => $id, 'status' => $request->status, 'is_last' => true]);
+                }
             }
 
-            /** per-client process observations */
-            if ($request->filled('clients')) {
-                foreach ($request->clients as $item) {
-                    if (!isset($item['process_id'])) {
-                        continue;
-                    }
+            /** solicitantes existentes */
+            foreach ($request->input('clients', []) as $item) {
+                /** only processes that belong to this sale can be edited */
+                $process = Process::where('id', $item['process_id'] ?? null)
+                                ->where('sales_id', $id)
+                                ->first();
 
-                    /** only processes that belong to this sale can be edited */
-                    $process = Process::where('id', $item['process_id'])
-                                    ->where('sales_id', $id)
-                                    ->first();
+                if (!$process) {
+                    continue;
+                }
 
-                    if (!$process) {
-                        continue;
-                    }
+                // solo se tocan los campos enviados
+                if (array_key_exists('observations', $item)) {
+                    $process->observations = $item['observations'];
+                }
+                if (array_key_exists('complete', $item)) {
+                    $process->complete = (bool) $item['complete'];
+                }
+                $process->save();
 
-                    $process->observations = $item['observations'] ?? null;
-                    $process->complete     = $item['complete'] ?? $process->complete;
-                    $process->save();
+                /** datos del solicitante, tipo de trámite y pasaporte anterior */
+                $this->updateApplicant($sale, $item, 'Pasaporte');
 
-                    /** update per-client process status */
-                    if (isset($item['process_status'])) {
-                        ProcessStatus::where('process_id', $item['process_id'])->update(['is_last' => false]);
-                        ProcessStatus::create([
-                            'process_id' => $item['process_id'],
-                            'status'     => $item['process_status'],
-                            'is_last'    => true
-                        ]);
-                    }
+                /** per-client process status: only a new history row when it actually changes */
+                $currentProcessStatus = ProcessStatus::where('process_id', $process->id)->orderByDesc('id')->value('status');
+
+                if (isset($item['process_status']) && $currentProcessStatus !== $item['process_status']) {
+                    ProcessStatus::where('process_id', $process->id)->update(['is_last' => false]);
+                    ProcessStatus::create([
+                        'process_id' => $process->id,
+                        'status'     => $item['process_status'],
+                        'is_last'    => true
+                    ]);
                 }
             }
 
@@ -522,6 +582,10 @@ class PassportSalesController extends Controller
                 'success' => true,
                 'message' => 'El registro se actualizó correctamente'
             ]);
+
+        } catch (\RuntimeException $e) {
+            \DB::rollback();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
 
         } catch (\Exception $e) {
             \DB::rollback();
@@ -537,7 +601,7 @@ class PassportSalesController extends Controller
      */
     public function delete(Request $request, $id)
     {
-        if ($this->isClientUser($request->user()) || !$request->user()->can('procedure_passport_delete')) {
+        if ($this->isClientUser($request->user()) || !$this->canManageSale($request->user(), $id, 'procedure_passport_delete')) {
             return $this->forbidden();
         }
 
